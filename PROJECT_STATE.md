@@ -1,7 +1,7 @@
 # ECSS-10 ДП Абай — PROJECT_STATE
 
 **Canonical source of truth для проекта**  
-**Последнее обновление:** 2026-09-03 16:19+05  
+**Последнее обновление:** 2026-09-03 16:23+05  
 **ECSS:** 3.18.0.271
 
 > Перед продолжением проекта читать этот файл и продолжать с раздела **«Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ»**. Не повторять подтверждённые этапы. Новые фактические данные пользователя имеют приоритет. Работать: одна операция → проверка → следующий шаг. Секреты не хранить и не повторять.
@@ -87,12 +87,13 @@ our integration service                          our integration service
 - Integration client `dp_abai_test`, service; API key/JWT не хранить, после приёмки ротировать.
 - JWT/auth node-local/in-memory.
 - На ecss2 временный listener `/tmp/ecss-events.js` успешно слушает реальные `conversations_event`; в продукт его не переносить как есть.
+- В live listener `workitem_id` оказался `null` даже на реальном queue-вызове 112; поэтому на него нельзя рассчитывать как на обязательный идентификатор Call API conversation events.
 
 ---
 
 ## 7. Текущий доступ
 
-Сейчас нет физического доступа к SIP-телефонам. Доступны Web UI, SSH, CoCon и серверные web-интерфейсы. Не делать handset feature-code обязательным шагом до onsite.
+Сейчас нет физического доступа к SIP-телефонам. Доступны Web UI, SSH, CoCon и серверные web-интерфейсы. Web UI умеет инициировать и отвечать на вызов, поэтому текущие интеграционные тесты можно продолжать удалённо.
 
 ---
 
@@ -134,14 +135,14 @@ Queue `Abai_112`:
 
 Оба боевых агента полностью проверены через Web UI: Login → Available → AuxWork → Available → Logout. Не повторять полный lifecycle без новой причины.
 
-2026-09-03 15:49 одновременно подтверждено:
+2026-09-03 16:21 перед live 112 тестом подтверждено одновременно:
 
 ```text
 1001 Operator1 available Phone=1001 idle
 1002 Operator2 available Phone=1002 idle
 ```
 
-### Боевой IVR — создан и проверен
+### Боевой IVR
 
 ```text
 name/id: Abai_112_ivr
@@ -156,32 +157,13 @@ mode: permanent
 version: 3.18.0.33
 ```
 
-`/domain/dp_abai/ivr/script/show --id Abai_112_ivr` подтвердил правильную привязку к `queue_id=Abai_112`.
+`/domain/dp_abai/ivr/script/show --id Abai_112_ivr` подтвердил `queue_id=Abai_112`.
 
-### Маршрут 112 — СОЗДАН И ПОДТВЕРЖДЁН 2026-09-03
+### Маршрут 112 — создан и подтверждён
 
-Перед изменением сделан штатный backup:
+Перед изменением сделан штатный backup `default_routing`.
 
-```text
-/domain/dp_abai/routing/export ecss1 default_routing
--> Context default_routing has been exported
-```
-
-Экспорт на ecss1:
-
-```text
-/var/lib/ecss/routing/ctx/src/dp_abai/dp_abai_default_routing_2026_8_26_13_32_4_661920.xml
-```
-
-Подготовлен и импортирован `default_routing_112.xml`. Импорт 16:18:08:
-
-```text
-importing file default_routing_112.xml...
-generated 11 rules
-1 context has been successfully imported
-```
-
-`/domain/dp_abai/routing/show default_routing` в 16:19:13 на `ds1@ecss2` подтвердил активный контекст:
+Активный context после импорта:
 
 ```text
 rule test:
@@ -195,7 +177,7 @@ rule local_calls:
   CDPN % -> local
 ```
 
-Итоговая цепочка теперь реально сконфигурирована:
+Итоговая цепочка:
 
 ```text
 112 -> default_routing/abai_112 -> Abai_112_ivr -> queue Abai_112 -> group Abai_112_cc -> Agent1001/Agent1002
@@ -265,9 +247,9 @@ CallRecordUrl при наличии
 
 ---
 
-## 13. Реальные `conversations_event` — ключевой результат
+## 13. Реальные `conversations_event` — подтверждённый mapping
 
-### Прямой 1001 -> 1002
+### 13.1 Прямой 1001 -> 1002
 
 На `alerting` две leg:
 - 1001: `direction=out`, `digits=1001`, `remote_digits=1002`;
@@ -276,60 +258,106 @@ CallRecordUrl при наличии
 Подтверждено:
 - `id` разный у leg;
 - `call_id` общий и стабилен;
-- `call_ref` общий и стабилен;
-- `workitem_id=null` для прямого вызова.
+- `call_ref` общий и стабилен на прямом двухстороннем звонке;
+- `workitem_id=null`.
 
-При ответе:
+При реальном ответе обе leg переходят `talking`, `has_answer_time=true`. После отбоя — `released`, `has_answer_time=true`. Без ответа — `released`, `has_answer_time=false`.
 
-```text
-status: talking
-has_answer_time: true
-answer_time: ...
-```
+### 13.2 Live queue test 1001 -> 112 -> Abai_112 -> Operator2, 2026-09-03 16:21–16:22
 
-После отбоя:
+Это первый подтверждённый реальный проход через боевой маршрут 112.
+
+Caller/IVR leg:
 
 ```text
-status: released
-has_answer_time: true
-answer_time: тот же
+alerting:
+  direction=out
+  digits=1001
+  remote_digits=112
+  call_id=<shared logical call id>
+  call_ref=<caller/IVR ref A>
+  workitem_id=null
+
+talking at 16:21:59:
+  has_answer_time=true
+  answer_time=16:21:59
 ```
 
-Без ответа `released` имеет `has_answer_time=false`.
-
-Рабочий mapping для прямого звонка:
+Operator leg после распределения на Operator2:
 
 ```text
-talking + has_answer_time=true -> answered
-released + has_answer_time=true -> finished
-released + has_answer_time=false -> не отправлять answered/finished
+alerting:
+  direction=in
+  digits=1002
+  remote_digits=1001
+  call_id=<THE SAME shared logical call id>
+  call_ref=<operator leg ref B, DIFFERENT from A>
+  workitem_id=null
+
+talking at 16:22:04:
+  display_name=Operator 2
+  has_answer_time=true
+  answer_time=16:22:04
 ```
 
-`call_id` — главный кандидат на внешний `Id`, но окончательно утверждать после queue/multicall 112.
+Обе leg затем пришли `released` с тем же общим `call_id` и со своими соответствующими `call_ref`/`answer_time`.
 
-`conversations_event` не даёт `duration`; realtime можно считать от `answer_time` до `released`, затем сверить с CDR.
+### КЛЮЧЕВЫЕ ВЫВОДЫ из queue test
 
-Внутренняя SSW-команда `get_call_record(call_ref)` есть, но публичный controller/DTO Call API не найден. На первом этапе `CallRecordUrl=null`; `call_ref` сохранять внутренне.
+1. **`call_id` подтверждён как лучший общий логический Id звонка через IVR/queue.** Он одинаков у caller->112 leg и у реально ответившей операторской leg.
+2. **`call_ref` НЕ является общим Id queue-звонка.** Через очередь caller/IVR leg и operator leg имеют разные `call_ref`. Для записи разговора нужно сохранять все call_ref данного call_id и отдельно определить, какой ref соответствует нужной записи.
+3. **`workitem_id` в Call API conversation events равен `null` даже при реальном queue-вызове.** Не строить production correlation на обязательном наличии `workitem_id`.
+4. **Нельзя преобразовывать любой `talking` в CRM `answered`.** Caller leg `1001 -> 112` перешла в `talking` в 16:21:59, когда вызов принял IVR/queue, а Operator2 реально ответил только в 16:22:04. Наивное правило дало бы ложный `answered` на 5 секунд раньше.
+5. Для входящего queue-вызова CRM `answered` должен формироваться по **реально ответившей операторской leg**, то есть leg внутреннего агента/номера, которая перешла в `talking` после распределения. В текущем тесте это `digits=1002`, `direction=in`, `display_name=Operator 2`.
+6. Для текущего внутреннего теста логический mapping:
+   - `Id = call_id`;
+   - `NumberA = 1001` (тестовый вызывающий; при реальном внешнем 112 здесь должен быть внешний CLI);
+   - `NumberB = 1002` (реально ответивший оператор);
+   - `answered` = операторская leg `talking` в 16:22:04;
+   - `finished` = завершение после уже зафиксированного operator answered для этого `call_id`;
+   - `CallRecordUrl = null` на первом этапе.
+7. `conversations_event` по-прежнему не содержит `duration`/`release_time`; для точного `Duration` нужно сверить CDR. Realtime fallback — время от operator `answer_time` до первого релевантного `released`, но CDR предпочтительнее.
+
+### Production mapping — текущая рабочая версия
+
+Для входящего 112:
+
+```text
+logical Id = call_id
+
+ignore caller/IVR talking as CRM answered
+
+operator leg talking + has_answer_time=true
+    -> CRM Status=answered
+    -> NumberB = digits фактически ответившего внутреннего оператора
+
+после того как answered уже зафиксирован для call_id:
+operator/call logical release
+    -> CRM Status=finished
+
+released без ранее подтверждённого operator answered
+    -> не отправлять answered/finished по минимальному контракту
+```
+
+Для outbound логику нужно проверить отдельно на реальном вызове через требуемый бизнес-сценарий.
 
 ---
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
 
-**Не возвращаться** к лицензии, VRRP, Mnesia, test 2000, созданию агентов, освобождению Test Agent1/2, forceLogout, `#160`, установке ecss-cc-ui, созданию `Abai_112_ivr` или созданию маршрута `112` — всё подтверждено.
+**Не возвращаться** к лицензии, VRRP, Mnesia, test 2000, созданию агентов, освобождению Test Agent1/2, forceLogout, `#160`, установке ecss-cc-ui, созданию `Abai_112_ivr`, созданию маршрута `112` или повторению direct 1001->1002 — всё подтверждено.
 
 Продолжать отсюда:
 
-1. **Сейчас:** перед первым живым тестом 112 повторно проверить runtime `Abai_112_cc`, потому что последняя проверка available/idle была в 15:49.
-2. Если Operator1/1001 и Operator2/1002 всё ещё `available/idle`, оставить live listener открытым.
-3. Выполнить ограниченный тест `1001 -> 112`: Operator1 будет вызывающим, поэтому он не доказывает multicall двух свободных операторов; цель — проверить путь `112 -> Abai_112`, появление queue/workitem и распределение на Operator2.
-4. Снять `conversations_event`: `workitem_id`, queue legs, `id`, `call_id`, `call_ref`, `digits`, `remote_digits`, `direction` на alerting/talking/released.
-5. Установить, сохраняется ли один логический `call_id` через вход в очередь и операторскую leg и как однозначно получить фактический `NumberB`.
-6. Сверить realtime Duration с CDR.
-7. Отдельно решить/проверить `lock_if_no_answer` и `lock_if_reject` перед боевым multicall.
-8. Полноценный multicall двух свободных операторов провести позже с внешним/третьим вызывающим.
-9. Проверить node-local поведение CC Web session при отказе одного `ecss-cc-ui-api`.
-10. Затем реализовать `/opt/ecss-integration-api` на обоих узлах и HA endpoint :443.
-11. После приёмки ротировать integration API key и agent PINs.
+1. **Сейчас:** найти CDR для live queue-вызова `1001 -> 112 -> Operator2`, answer оператора `2026-09-03 16:22:04`, и определить точный talk duration/end time.
+2. Сопоставить CDR identifiers с `call_id` и обоими `call_ref`; понять, какой `call_ref` относится к операторскому разговору/записи.
+3. После CDR зафиксировать окончательный алгоритм `Duration` и `finished`.
+4. Отдельно проверить поведение `lock_if_no_answer` и `lock_if_reject` до боевого multicall.
+5. Полноценный multicall двух свободных операторов провести с внешним/третьим вызывающим; текущий `1001 -> 112` доказал queue routing и operator selection, но не одновременный ring двух свободных операторов, потому что 1001 был вызывающим.
+6. На внешнем/третьем вызове подтвердить, что `NumberA` сохраняет реальный внешний CLI и `NumberB` становится фактически ответившим агентом.
+7. Проверить node-local поведение CC Web session при отказе одного `ecss-cc-ui-api`.
+8. Затем реализовать `/opt/ecss-integration-api` на обоих узлах и HA endpoint :443.
+9. После приёмки ротировать integration API key и agent PINs.
 
 ---
 
@@ -346,6 +374,12 @@ ssh admin@localhost -p 8023
 /domain/dp_abai/cc/queue/Abai_112/info
 ```
 
+CDR path:
+
+```text
+/var/lib/ecss/ftp/domain/dp_abai/default/csv
+```
+
 ---
 
 ## 16. Security
@@ -359,3 +393,5 @@ ssh admin@localhost -p 8023
 - PostgreSQL password;
 - private keys/Erlang cookie;
 - `/etc/ecss/ssl/*.key`.
+
+Если секрет попал в чат/скрин — запланировать ротацию.
