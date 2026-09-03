@@ -1,7 +1,7 @@
 # ECSS-10 ДП Абай — PROJECT_STATE
 
 **Canonical source of truth для проекта**  
-**Последнее обновление:** 2026-09-03 16:05+05  
+**Последнее обновление:** 2026-09-03 16:19+05  
 **ECSS:** 3.18.0.271
 
 > Перед продолжением проекта читать этот файл и продолжать с раздела **«Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ»**. Не повторять подтверждённые этапы. Новые фактические данные пользователя имеют приоритет. Работать: одна операция → проверка → следующий шаг. Секреты не хранить и не повторять.
@@ -114,7 +114,7 @@ Distribution `multicall`; звонок ранее вызывал оба SIP. Н�
 
 ---
 
-## 9. Боевая 112 — очередь/агенты/IVR
+## 9. Боевая 112 — очередь/агенты/IVR/маршрут
 
 Группа `Abai_112_cc`:
 - Agent1001 = Operator1 / Phone1001;
@@ -141,26 +141,7 @@ Queue `Abai_112`:
 1002 Operator2 available Phone=1002 idle
 ```
 
-### Routing до 16:05
-
-Единственный context: `default_routing`.
-
-Текущее содержимое:
-
-```text
-rule test:
-  CDPN 2000 -> IVR script 06fbb268b12127f9
-
-rule local_calls:
-  final=true
-  CDPN % -> local
-```
-
-Отдельного правила для `112` пока **нет**.
-
-### Боевой IVR — создан и проверен 2026-09-03 16:05
-
-Создан отдельный IVR:
+### Боевой IVR — создан и проверен
 
 ```text
 name/id: Abai_112_ivr
@@ -175,15 +156,52 @@ mode: permanent
 version: 3.18.0.33
 ```
 
-Импорт успешен:
-
-```text
-Script successfully imported with id <<"Abai_112_ivr">>.
-```
-
 `/domain/dp_abai/ivr/script/show --id Abai_112_ivr` подтвердил правильную привязку к `queue_id=Abai_112`.
 
-**Важно:** IVR готов, но маршрут `CDPN=112 -> Abai_112_ivr` ещё не добавлен.
+### Маршрут 112 — СОЗДАН И ПОДТВЕРЖДЁН 2026-09-03
+
+Перед изменением сделан штатный backup:
+
+```text
+/domain/dp_abai/routing/export ecss1 default_routing
+-> Context default_routing has been exported
+```
+
+Экспорт на ecss1:
+
+```text
+/var/lib/ecss/routing/ctx/src/dp_abai/dp_abai_default_routing_2026_8_26_13_32_4_661920.xml
+```
+
+Подготовлен и импортирован `default_routing_112.xml`. Импорт 16:18:08:
+
+```text
+importing file default_routing_112.xml...
+generated 11 rules
+1 context has been successfully imported
+```
+
+`/domain/dp_abai/routing/show default_routing` в 16:19:13 на `ds1@ecss2` подтвердил активный контекст:
+
+```text
+rule test:
+  CDPN 2000 -> IVR 06fbb268b12127f9
+
+rule abai_112:
+  CDPN 112 -> IVR Abai_112_ivr
+
+rule local_calls:
+  final=true
+  CDPN % -> local
+```
+
+Итоговая цепочка теперь реально сконфигурирована:
+
+```text
+112 -> default_routing/abai_112 -> Abai_112_ivr -> queue Abai_112 -> group Abai_112_cc -> Agent1001/Agent1002
+```
+
+Тестовый `2000` и общий `% -> local` сохранены.
 
 ---
 
@@ -297,19 +315,19 @@ released + has_answer_time=false -> не отправлять answered/finished
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
 
-**Не возвращаться** к лицензии, VRRP, Mnesia, test 2000, созданию агентов, освобождению Test Agent1/2, forceLogout, `#160`, установке ecss-cc-ui или повторным полным lifecycle Agent1001/1002.
+**Не возвращаться** к лицензии, VRRP, Mnesia, test 2000, созданию агентов, освобождению Test Agent1/2, forceLogout, `#160`, установке ecss-cc-ui, созданию `Abai_112_ivr` или созданию маршрута `112` — всё подтверждено.
 
 Продолжать отсюда:
 
-1. **Сейчас:** перед изменением `default_routing` сделать экспорт/резервную копию существующего контекста.
-2. После подтверждения backup — добавить отдельное правило `CDPN=112 -> IVR Abai_112_ivr` **перед** финальным `local_calls` (`% -> local`). Тестовый `2000` не менять.
-3. Проверить `/domain/dp_abai/routing/show default_routing` после изменения.
-4. Только затем тестировать `112 -> Abai_112` на live listener и снять `workitem_id`, queue legs, общий `call_id` и фактический `NumberB`.
-5. Полноценный multicall двух свободных операторов лучше проверять внешним/третьим вызывающим. Пока физического доступа нет, допустим ограниченный тест `1001 -> 112` для изучения queue/workitem, но он не доказывает multicall двух свободных операторов.
+1. **Сейчас:** перед первым живым тестом 112 повторно проверить runtime `Abai_112_cc`, потому что последняя проверка available/idle была в 15:49.
+2. Если Operator1/1001 и Operator2/1002 всё ещё `available/idle`, оставить live listener открытым.
+3. Выполнить ограниченный тест `1001 -> 112`: Operator1 будет вызывающим, поэтому он не доказывает multicall двух свободных операторов; цель — проверить путь `112 -> Abai_112`, появление queue/workitem и распределение на Operator2.
+4. Снять `conversations_event`: `workitem_id`, queue legs, `id`, `call_id`, `call_ref`, `digits`, `remote_digits`, `direction` на alerting/talking/released.
+5. Установить, сохраняется ли один логический `call_id` через вход в очередь и операторскую leg и как однозначно получить фактический `NumberB`.
 6. Сверить realtime Duration с CDR.
-7. Решить/проверить `lock_if_no_answer` и `lock_if_reject` перед боем.
-8. Проверить node-local поведение CC Web session при отказе одного `ecss-cc-ui-api`.
-9. Когда будет внешний/физический вызов — полный E2E 112: inbound → multicall → answer → talking → end → RTP/CDR.
+7. Отдельно решить/проверить `lock_if_no_answer` и `lock_if_reject` перед боевым multicall.
+8. Полноценный multicall двух свободных операторов провести позже с внешним/третьим вызывающим.
+9. Проверить node-local поведение CC Web session при отказе одного `ecss-cc-ui-api`.
 10. Затем реализовать `/opt/ecss-integration-api` на обоих узлах и HA endpoint :443.
 11. После приёмки ротировать integration API key и agent PINs.
 
@@ -322,11 +340,7 @@ ssh admin@localhost -p 8023
 ```
 
 ```text
-/domain/dp_abai/routing/list
 /domain/dp_abai/routing/show default_routing
-/domain/dp_abai/routing/export ecss1 default_routing
-/domain/dp_abai/ivr/script/list
-/domain/dp_abai/ivr/script/show --id 06fbb268b12127f9
 /domain/dp_abai/ivr/script/show --id Abai_112_ivr
 /domain/dp_abai/cc/group/cache-info Abai_112_cc
 /domain/dp_abai/cc/queue/Abai_112/info
