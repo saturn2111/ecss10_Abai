@@ -2,15 +2,15 @@
 
 **Canonical source of truth для проекта**  
 **Последнее обновление:** 2026-09-03  
-**ECSS:** 3.18.0.271  
+**ECSS:** 3.18.0.271
 
 > ## Инструкция для любого нового чата ChatGPT
 >
-> Перед продолжением проекта сначала прочитать этот файл и продолжать **с раздела «Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ»**.
+> Перед продолжением проекта сначала читать этот файл и продолжать **с раздела «Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ»**.
 >
-> Не заставлять пользователя повторять уже подтверждённые этапы. Новые фактические данные пользователя имеют приоритет. После существенного этапа обновлять этот файл.
+> Не повторять уже подтверждённые этапы. Новые фактические данные пользователя имеют приоритет. После существенного этапа обновлять этот файл.
 >
-> Пользователь работает пошагово: одна операция → проверка результата → следующий шаг. Команды давать полностью. Секреты не хранить и не повторять.
+> Пользователь предпочитает пошаговую работу: одна операция → проверка → следующий шаг. Команды давать полностью. Секреты не хранить и не повторять.
 
 ---
 
@@ -18,7 +18,7 @@
 
 Двухузловая отказоустойчивая ECSS-10 для ДП области Абай с Call-center и внешней API-интеграцией.
 
-Основные цели:
+Цели:
 
 - до ~1000 абонентов;
 - HA ECSS на `ecss1/ecss2`;
@@ -27,14 +27,10 @@
 - Call API на обоих ECSS-узлах;
 - штатный Contact Center;
 - боевая очередь 112;
-- внешний API для разработчиков: очереди/группы, операторы, статусы, звонки, кто ответил, времена/длительности, история, realtime;
-- integration service размещать **не на отдельных Gateway VM, а прямо на ecss1 и ecss2**.
+- внешний API: очереди/группы, операторы, статусы, звонки, кто ответил, времена/длительности, история, realtime;
+- integration service размещать **на ecss1 и ecss2**, без отдельных Gateway VM.
 
----
-
-## 2. Архитектура API — принятое решение
-
-Отдельные `ecss-gateway01/ecss-gateway02` больше не целевая архитектура.
+Целевая схема:
 
 ```text
 External CRM
@@ -43,244 +39,174 @@ External CRM
     |
  API VIP / stable endpoint
     |
- +--+-------------------+
- |                      |
-ecss1                  ecss2
-192.168.190.70          192.168.190.80
- |                      |
-our integration       our integration
-service               service
- |                      |
- +-- Call API :8089     +-- Call API :8089
- +-- CC UI/API :8091    +-- CC UI/API :8091 (после установки на ecss2)
- +-- SSW :8086          +-- SSW :8086
+ +----------------------+----------------------+
+ |                                             |
+ecss1                                         ecss2
+192.168.190.70                                192.168.190.80
+ |                                             |
+our integration service                      our integration service
+ |                                             |
+ +-- Call API :8089                            +-- Call API :8089
+ +-- CC UI/API :8091                           +-- CC UI/API :8091 (после установки)
+ +-- SSW :8086                                 +-- SSW :8086
 ```
 
 Свой код не встраивать в `/usr/share/ecss/ecss-call-api`; размещать отдельно, например `/opt/ecss-integration-api`, отдельный systemd unit.
 
 ---
 
-## 3. Proxmox / ECSS VM
+## 2. Базовая инфраструктура — выполнено
 
 Два независимых Proxmox-хоста, **не PVE cluster**.
 
-### srv-prmx-1
+- `srv-prmx-1` mgmt `192.168.190.2/26`, gw `192.168.190.1`, `vmbr0`, `bond0`, 802.3ad LACP, VLAN-aware.
+- `srv-prmx-2` mgmt `192.168.190.3/26`, аналогичная схема.
 
-- management `192.168.190.2/26`
-- gateway `192.168.190.1`
-- `vmbr0`, VLAN-aware
-- `bond0`, 802.3ad LACP, nic0+nic1
-- PVE 9.2.2, kernel 7.0.2-6-pve
+ECSS VM:
 
-### srv-prmx-2
-
-- management `192.168.190.3/26`
-- gateway `192.168.190.1`
-- аналогичная LACP/VLAN схема
-
-### ecss1
-
-- VMID 101
-- Ubuntu Server 22.04.5
-- management `192.168.190.70/26`, IF `enp6s18`
-- gateway `192.168.190.65`
-- voice `192.168.191.2/24`, IF `enp6s19`
-- 8 vCPU / 32 GB RAM / 280 GB
-
-### ecss2
-
-- VMID 102
-- Ubuntu Server 22.04.5
-- management `192.168.190.80/26`
-- voice `192.168.191.3/24`
-- 8 vCPU / 32 GB RAM / 280 GB
-
-Общее:
-
-- Linux user `darth_vader`
-- timezone `Asia/Almaty`
-- swap disabled
-- `/etc/hosts` настроен для `ecss1/ecss2`
-
----
-
-## 4. ECSS cluster — выполнено
+- `ecss1` VMID101, Ubuntu 22.04.5, mgmt `192.168.190.70/26`, voice `192.168.191.2/24`, 8 vCPU / 32GB / 280GB.
+- `ecss2` VMID102, Ubuntu 22.04.5, mgmt `192.168.190.80/26`, voice `192.168.191.3/24`, 8 vCPU / 32GB / 280GB.
+- Linux user `darth_vader`, timezone `Asia/Almaty`, swap off.
 
 Cluster ID: **`ecss1`**. Не менять.
 
-Инициализация:
-
-```text
-/system/clusters/set [ecss1, ecss2]
-```
-
 Парные компоненты: `core1`, `ds1`, `md1`, `mycelium1`, `sip1`.
 
-Ранее устранялись Mnesia/split-brain проблемы; кластер доведён до синхронизированного состояния. Без новой причины не повторять восстановление и не удалять Mnesia каталоги вручную.
-
-CoCon:
-
-```bash
-ssh admin@localhost -p 8023
-```
+Ранее были Mnesia/split-brain проблемы; они устранены. Без новой причины не повторять восстановление и не удалять Mnesia каталоги.
 
 PostgreSQL BDR:
 
 - `ecss-postgres-bdr-ssw 18.0.0+ssw`
 - port `5439`
-- replication проверена
+- replication проверена.
 
 Gluster:
 
 - volume `ecss_volume`
-- `192.168.190.70:/var/lib/ecss/glusterfs`
-- `192.168.190.80:/var/lib/ecss/glusterfs`
-- replica 2, heal проверен
+- `.70:/var/lib/ecss/glusterfs`
+- `.80:/var/lib/ecss/glusterfs`
+- replica 2, heal проверен.
 
-RestFS:
-
-- `/var/lib/ecss/restfs`
-- port 9990
-
-PostgreSQL backup:
-
-- `ssw_dump_postgres.timer`
-- daily около 00:00
-- manual dump тестировался
+RestFS `/var/lib/ecss/restfs`, port 9990.
 
 ---
 
-## 5. SIP / Media / VRRP — выполнено
+## 3. SIP / Media / VRRP — выполнено
 
 Media Server `3.18.0.7`.
 
-- msr.ecss1 `192.168.191.2`, SIP 5040 TCP/UDP, MCC 5700 TCP
-- msr.ecss2 `192.168.191.3`, SIP 5040 TCP/UDP, MCC 5700 TCP
-- registrar ecss1 `.191.2:5000`
-- registrar ecss2 `.191.3:5000`
+- msr.ecss1 `192.168.191.2`, SIP5040 TCP/UDP, MCC5700.
+- msr.ecss2 `192.168.191.3`, SIP5040 TCP/UDP, MCC5700.
+- registrar `.191.2:5000` и `.191.3:5000`.
 
 Domain `dp_abai`, SIP IP-set `sip_main`.
 
 VRRP:
 
-- VIP1 `192.168.191.4/24`, VRID31, normal MASTER ecss1
-- VIP2 `192.168.191.5/24`, VRID32, normal MASTER ecss2
+- VIP1 `192.168.191.4/24`, VRID31, normal MASTER ecss1.
+- VIP2 `192.168.191.5/24`, VRID32, normal MASTER ecss2.
 
-Failover `ecss-pa-sip` реально проверялся: VIP переходил на второй узел и возвращался после восстановления.
+Failover `ecss-pa-sip` реально проверен.
 
 ---
 
-## 6. Лицензирование — выполнено
+## 4. Лицензирование — выполнено
 
 Не возвращаться к старому DEFAULT/No passport.
 
-Текущее состояние:
-
-- ECSS TPM License / ID 1
-- commercial
-- SSW ID `ECSS0000400`
-- организация Департамент полиции области Абай
-- expiry `31.07.2050`
-
-License Manager:
-
-- `192.168.190.70:4321`
-- `192.168.190.80:4321`
-
-Оба были Alive; failover лицензии проверялся.
-
-`ecss-license-provider 1.0.6` активен на обоих. По одному Rutoken на каждом физическом сервере.
+- ECSS TPM License / ID1, commercial.
+- SSW ID `ECSS0000400`.
+- expiry `31.07.2050`.
+- License Managers `.70:4321`, `.80:4321`, оба Alive; failover проверен.
+- `ecss-license-provider 1.0.6` активен на обоих.
+- по одному Rutoken на физическом сервере.
 
 ---
 
-## 7. Абоненты / CDR / trunk
+## 5. Абоненты / CDR / trunk
 
 Ранее подтверждено:
 
-- SIP 1001 зарегистрирован (VP-30P; старый contact `.191.246`)
-- SIP 1002 зарегистрирован (VP-17P; старый contact `.191.245`)
+- SIP1001 зарегистрирован, VP-30P.
+- SIP1002 зарегистрирован, VP-17P.
 
 CDR:
 
-- period 3600s
-- `/var/lib/ecss/ftp/domain/dp_abai/default/csv`
-- файлы создаются
+- period 3600s;
+- `/var/lib/ecss/ftp/domain/dp_abai/default/csv`;
+- файлы создаются.
 
-SIP trunk к оператору пока не завершён: нужны реальные параметры оператора (IP/port/auth/DID/codecs/From/PAI/формат номера).
+SIP trunk к оператору пока не завершён: нужны реальные параметры оператора.
 
 ---
 
-## 8. Call API :8089 — выполнено
+## 6. Call API :8089 — выполнено
 
 Package `/usr/share/ecss/ecss-call-api`, service `ecss-call-api`.
 
-- ecss1: `192.168.190.70:8089`, SSW `.70:8086`
-- ecss2: `192.168.190.80:8089`, SSW `.80:8086`
+- ecss1 `.70:8089`, SSW `.70:8086`.
+- ecss2 `.80:8089`, SSW `.80:8086`.
 
 Подтверждено:
 
-- `integration.register`
-- JWT
-- WS authorization/open
-- heartbeat ping/pong
-- `call.make`
-- conversation events
-- alerting/released
+- `integration.register`;
+- JWT;
+- WS authorization/open;
+- heartbeat ping/pong;
+- `call.make`;
+- conversation events;
+- alerting/released;
+- failover `.70 → .80 → .70`.
 
-Integration client `dp_abai_test`, service, allowed numbers ранее 1001–1005.
+Integration client `dp_abai_test`, service; allowed numbers ранее 1001–1005.
 
-Call API failover проверен: `.70` → stop service → `.80` register/WS/pong → восстановление `.70`.
-
-JWT/auth state node-local; после failover новый активный узел должен получать новый JWT и WS.
-
-ECSS integration API key ранее попадал в чат/логи → после финальной интеграции обязательно ротировать. Никогда не хранить key/JWT в этом файле.
+JWT/auth state node-local. API key/JWT не хранить; API key после финальной интеграции ротировать.
 
 ---
 
-## 9. Ограничение текущего доступа пользователя
+## 7. Ограничение доступа пользователя
 
 **Сейчас пользователь не имеет физического доступа к SIP-телефонам.**
 
-Доступны Web UI, SSH, CoCon и серверные веб-интерфейсы.
+Доступны Web UI, SSH, CoCon и серверные web-интерфейсы.
 
-Не предлагать обязательные действия на физическом телефоне до явного сообщения, что пользователь onsite.
+Не делать обязательным шагом набор feature code на физическом аппарате, пока пользователь не скажет, что onsite.
 
 ---
 
-## 10. Call-center — тест уже пройден
+## 8. Call-center — тестовая схема уже пройдена
 
-Тестовая схема была создана и проверена ранее:
+Тест:
 
 ```text
-2000 -> queue test -> group test_cc -> SIP 1001 + SIP 1002
+2000 -> queue test -> group test_cc -> SIP1001 + SIP1002
 ```
 
 Distribution `multicall`; звонок на 2000 вызывал оба SIP.
 
-**Не повторять этот этап.** Тестовую схему пока не удалять до полной приёмки 112.
+**Не повторять этот этап и пока не удалять test/test_cc.**
+
+Текущий runtime test_cc:
+
+```text
+Agent 1  Test 1001  available  Phone=1001  Activity=idle
+Agent 2  Test 1002  available  Phone=1002  Activity=idle
+```
+
+Это важно: старые Test Agent 1/2 были авторизованы ранее с физических аппаратов через feature code и сейчас держат номера 1001/1002.
 
 ---
 
-## 11. Боевая 112 — создана
+## 9. Боевая 112 — создана
 
-Группа агентов:
+Группа:
 
 ```text
 Abai_112_cc
 ```
 
-- Agent 1001 — Operator 1, description `sip 1001`
-- Agent 1002 — Operator 2, description `sip 1002`
-
-Agent ID совпадает с SIP-номером.
-
-Подтверждено:
-
-```text
-/domain/dp_abai/cc/agent/where 1001 -> Abai_112
-/domain/dp_abai/cc/agent/where 1002 -> Abai_112
-/domain/dp_abai/cc/group/info -> Abai_112_cc: 1001,1002
-```
+- Agent1001 — Operator1, description `sip 1001`.
+- Agent1002 — Operator2, description `sip 1002`.
 
 Queue:
 
@@ -288,53 +214,49 @@ Queue:
 Abai_112
 ```
 
-Description `ДП Абай 112`.
+Параметры:
 
-Подтверждённые параметры:
+- agents 1001,1002;
+- distribution `multicall`;
+- max_wait_time 120;
+- max_distribution_attempts 3;
+- max_distribution_duration 10;
+- queue_length 20;
+- callback_cooldown_timeout 300;
+- skill_based_distribution false;
+- lock_if_no_answer true;
+- lock_if_reject true;
+- serial_lock_enabled true.
 
-- agents `1001,1002`
-- distribution `multicall`
-- max_wait_time 120
-- max_distribution_attempts 3
-- max_distribution_duration 10
-- queue_length 20
-- callback_cooldown_timeout 300
-- skill_based_distribution false
-- lock_if_no_answer true
-- lock_if_reject true
-- serial_lock_enabled true
-
-Перед реальным multicall отдельно решить/проверить `lock_if_no_answer` и `lock_if_reject`.
-
-До установки CC UI/API runtime был:
+Текущий runtime Abai_112_cc:
 
 ```text
-1001 Status=stopped Phone number=- Activity=idle
-1002 Status=stopped Phone number=- Activity=idle
+1001 Operator 1 stopped Phone=- Activity=idle
+1002 Operator 2 stopped Phone=- Activity=idle
 ```
+
+Боевой Agent1001 пока не может занять Phone1001, потому что номер уже держит старый Test Agent1.
 
 ---
 
-## 12. Feature codes CC — найдены
+## 10. Feature codes Call-center
 
 ```text
-/domain/dp_abai/ss/feature-codes/info cc_agent
+login          *160*AGENT_ID*PASSWORD#
+logout         #160
+complete       #161
+enter_auxwork  #162
+make_available #163
+call_agent     *165*AGENT_ID#
 ```
 
-- login `*160*AGENT_ID*PASSWORD#`
-- logout `#160`
-- complete `#161`
-- enter_auxwork `#162`
-- make_available `#163`
-- call_agent `*165*AGENT_ID#`
-
-Пароли/PIN агентов не хранить. Они попадали на скриншоты → перед боем ротировать.
+Agent PIN/password не хранить и не повторять; перед боем ротировать.
 
 ---
 
-## 13. Внутренний Contact Center API — найден
+## 11. Внутренний Contact Center API
 
-В установленном Call API найдены сервисы:
+Найдены сервисы:
 
 ```text
 CRM       = call
@@ -343,46 +265,32 @@ CC_AGENT  = cc/arm
 CC_PUBSUB = cc/pubsub
 ```
 
-Найдены операции `login_agent`, `logout_agent`, `make_available`, `auxwork`, `agent_list`, `agents_list`, `group_list`, `all_queues`, `operator_call_history`, queue operations и realtime `agents_info_event`.
+Операции: `login_agent`, `logout_agent`, `make_available`, `auxwork`, `agent_list`, `agents_list`, `group_list`, `all_queues`, `operator_call_history`, queue operations, realtime `agents_info_event`.
 
-`login_agent` сериализуется как XML с:
-
-```text
-agent_id
-number
-```
-
-`logout_agent`/`make_available` используют `agent_id`; `auxwork` использует `agent_id` + `reason`.
-
-Транспорт SSW: HTTP POST XML + cookie/token + WebSocket.
+`login_agent` сериализуется с `agent_id` и `number`; `logout_agent`/`make_available` — с `agent_id`; `auxwork` — `agent_id + reason`.
 
 ---
 
-## 14. ecss-cc-ui — НОВЫЙ ПОДТВЕРЖДЁННЫЙ ЭТАП 2026-09-03
+## 12. ecss-cc-ui 18.0.34 — установлен на ecss1
 
-На `ecss1` из официального ELTEX repo jammy/3.18 установлен:
+Перед установкой dry-run: 1 новый пакет, 0 upgrades, 0 removals.
+
+Установлено:
 
 ```text
 ecss-cc-ui 18.0.34
 ```
 
-Dry-run перед установкой показал: 1 новый пакет, 0 upgrades, 0 removals.
-
-После установки подтверждено:
+Подтверждено:
 
 ```text
-ecss-cc-ui-api.service  active running
-ecss-cc-ui.service      active
+ecss-cc-ui-api.service active running
+ecss-cc-ui.service     active
+0.0.0.0:8090           openresty/nginx UI
+0.0.0.0:8091           node WebSocket API
 ```
 
-Listeners:
-
-```text
-0.0.0.0:8090  openresty/nginx — Call-center UI
-0.0.0.0:8091  node MainThread — Call-center API/WebSocket proxy
-```
-
-Systemd API unit:
+API unit:
 
 ```text
 WorkingDirectory=/usr/share/ecss/ecss-cc-ui-api
@@ -390,99 +298,175 @@ ExecStart=/usr/bin/nodejs /usr/share/ecss/ecss-cc-ui-api/dist/websockets/src/mai
 User=ssw
 ```
 
-UI unit управляет openresty конфигом `/etc/openresty/sites-available/ecss-cc-ui.conf`.
-
-Конфиг API найден:
+Конфиг:
 
 ```text
 /etc/ecss/ecss-cc-ui-api/config.yaml
-/etc/ecss/ecss-cc-ui-api/example.yaml
 ```
 
-Web UI **фактически открывается в браузере на ecss1:8090**; пользователь прислал экран авторизации Call-center.
+Фактические параметры:
 
-При установке параметры БД адресной книги оставлены по значениям установщика для ECSS 3.18: PostgreSQL, localhost, port 5439, user postgres. Секрет БД не хранить.
+```text
+ECSS core host localhost
+ECSS core port 8086
+SQL/address-book host localhost
+SQL/address-book port 5439
+```
 
-`ecss-cc-ui` пока установлен только на **ecss1**. На ecss2 ставить после успешного функционального теста ecss1.
+Web UI реально открывается на `https://192.168.190.70:8090`.
+
+`ecss-cc-ui` пока **не установлен на ecss2** — ставить после успешного функционального теста ecss1.
 
 ---
 
-## 15. Требования внешних разработчиков
+## 13. НОВОЕ: программный CC login подтверждён
 
-Нужно дать:
+Исходники `ecss-cc-ui-api 18.0.34` подтвердили штатный action:
+
+```text
+action = login
+payload = login,password,number,profile,domain
+```
+
+Он обращается в:
+
+```text
+http://localhost:8086/<domain>/service/cc/arm/login
+```
+
+с `websocket_control="true"`, получает ECSS cookie/session, создаёт CC User и возвращает encrypted token.
+
+Практически проверено через Web UI и Node/WebSocket:
+
+```text
+login=1
+number=1001
+profile=default
+domain=dp_abai
+```
+
+успешно возвращает status 200, `agentId=1`, CC token и профиль возможностей.
+
+То есть программный login через штатный CC API **работает**.
+
+При этом это не освобождает Phone1001 от старой телефонной CC-сессии Agent1: `cache-info test_cc` остаётся `available / 1001`.
+
+Web UI кнопка «Выход» закрывает web/frontend ECSS connection, но исходная сессия Agent1, созданная через физический `*160*...#`, остаётся активной.
+
+---
+
+## 14. НОВОЕ: forceLogout найден, но обычному Agent1 запрещён
+
+Штатный WS action:
+
+```text
+operator/forceLogout
+```
+
+Точный request:
+
+```json
+{"action":"operator/forceLogout","requestId":2,"payload":{"id":"1"}}
+```
+
+Внутри он формирует ECSS `force_logout {agent_id:"1"}`.
+
+Практически протестировано после успешного WS login Agent1.
+
+Профиль Agent1 (`default`) вернул:
+
+```text
+force_logout=false
+agents_manage=false
+queues_manage=false
+```
+
+Ответ на `operator/forceLogout id=1`:
+
+```text
+status=500
+code=5
+message="You are not allowed for this command"
+```
+
+Это ожидаемый RBAC-отказ. Не повторять эту попытку обычным Agent1.
+
+---
+
+## 15. Требования внешнего API
+
+Наружу нужно дать:
 
 - очереди/группы и состав операторов;
-- текущий availability/status;
-- управление ready / away(AuxWork) / logout;
+- текущий availability;
+- ready / away(AuxWork) / logout;
 - caller/callee;
 - очередь вызова;
-- кто из операторов ответил;
-- timestamps start/ringing/answer/end;
+- кто ответил;
+- start/ringing/answer/end;
 - wait/talk time;
 - answered/missed;
-- историю;
+- history;
 - realtime events.
 
-Модель наружу:
+Внешняя модель:
 
 ```text
 availability_status: ready | away | offline
 call_state: idle | ringing | talking
 ```
 
-`busy/talking` нельзя устанавливать вручную — это фактический call state.
+`busy/talking` не устанавливать вручную.
 
 ---
 
 ## 16. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
 
-**Не возвращаться** к test/test_cc, callcenter_enabled, лицензии, VRRP, созданию 1001/1002 или Abai_112, установке ecss-cc-ui на ecss1 — это уже выполнено.
+**Не возвращаться** к установке ecss-cc-ui на ecss1, test/test_cc, лицензии, VRRP, созданию 1001/1002, поиску формата WS login или повторному `operator/forceLogout` обычным Agent1.
 
 Продолжать отсюда:
 
-1. На открывшемся `ecss-cc-ui` ecss1 выполнить **только login Agent 1001** программно через web UI/API:
-   - Agent ID `1001`
-   - Phone number `1001`
-   - Domain `dp_abai`
-   - role/profile `operator` если поле требуется
-   - пароль агента вводить только локально, в чат не передавать.
-2. Сразу после login проверить:
+1. Освободить Phone1001 от старой телефонной сессии Test Agent1 **без физического телефона**.
+2. Ближайший безопасный кандидат: после программного login Agent1 использовать разрешённый action `call/makeCall` для набора feature code `#160` от имени Agent1/Phone1001. Профиль Agent1 имеет `call_basic=true`; `call/makeCall` требует обычную authorization, а не `force_logout` privilege.
+3. После попытки сразу проверить:
    ```text
-   /domain/dp_abai/cc/group/cache-info Abai_112_cc
+   /domain/dp_abai/cc/group/cache-info test_cc
    ```
-   Ожидаем для 1001 Phone number=1001 и status != stopped.
-3. Если login не проходит — смотреть `/etc/ecss/ecss-cc-ui-api/config.yaml` без вывода секретов и `journalctl -u ecss-cc-ui-api` после попытки.
-4. После успешного login 1001 проверить AuxWork → Available → Logout и realtime изменение.
-5. Повторить для 1002.
-6. После функциональной проверки установить `ecss-cc-ui 18.0.34` на ecss2 с теми же параметрами и проверить 8090/8091.
-7. Проверить runtime `agent/realtime` и `queue/realtime`.
-8. Проверить маршрут `112 -> Abai_112` (не считать завершённым без факта).
-9. Когда будет физический доступ — end-to-end звонок 112, answer/talking/RTP/CDR.
-10. Затем писать `/opt/ecss-integration-api` на ecss1/ecss2 и HA endpoint 443.
-11. После приёмки ротировать ECSS integration API key и agent PINs.
+   Цель:
+   ```text
+   Agent1 stopped Phone=-
+   Agent2 available Phone=1002
+   ```
+4. Если `call/makeCall -> #160` не завершит старую сессию, перейти к прямому поддерживаемому `cc/arm`/supervisor механизму logout, не удаляя test_cc.
+5. После освобождения 1001 — login боевого Agent1001 с Phone1001 через ecss-cc-ui и проверить `Abai_112_cc`.
+6. Проверить программно AuxWork → Available → Logout для боевого Agent1001.
+7. Повторить аналогично для 1002.
+8. После функциональной проверки установить `ecss-cc-ui 18.0.34` на ecss2 и проверить 8090/8091.
+9. Проверить маршрут `112 -> Abai_112` и lock flags.
+10. Когда будет физический доступ — end-to-end 112: ring/answer/talking/RTP/CDR.
+11. Затем реализовать `/opt/ecss-integration-api` на ecss1/ecss2 и HA endpoint :443.
+12. После приёмки ротировать integration API key и agent PINs.
 
 ---
 
 ## 17. Полезные команды
+
+CoCon:
 
 ```bash
 ssh admin@localhost -p 8023
 ```
 
 ```text
-/domain/dp_abai/cc/agent/list
+/domain/dp_abai/cc/group/cache-info test_cc
+/domain/dp_abai/cc/group/cache-info Abai_112_cc
 /domain/dp_abai/cc/agent/info 1001
 /domain/dp_abai/cc/agent/info 1002
-/domain/dp_abai/cc/agent/where 1001
-/domain/dp_abai/cc/agent/where 1002
-/domain/dp_abai/cc/group/info
-/domain/dp_abai/cc/group/cache-info Abai_112_cc
-/domain/dp_abai/cc/queue/list
 /domain/dp_abai/cc/queue/Abai_112/info
 /domain/dp_abai/ss/feature-codes/info cc_agent
 ```
 
-Services/ports:
+Services:
 
 ```bash
 systemctl status ecss-call-api
@@ -495,29 +479,28 @@ ss -lnt | grep -E ':(8089|8090|8091)\b'
 
 ## 18. Security
 
-Никогда не сохранять:
+Никогда не сохранять/не повторять:
 
-- ECSS integration API key
-- JWT
-- Linux/CoCon/WebConf passwords
-- Rutoken PIN
-- agent passwords/PIN
-- PostgreSQL password
-- private keys
-- Erlang cookie
-- `/etc/ecss/ssl/*.key`
+- ECSS integration API key;
+- JWT/CC token;
+- Linux/CoCon/WebConf passwords;
+- Rutoken PIN;
+- agent passwords/PIN;
+- PostgreSQL password;
+- private keys/Erlang cookie;
+- `/etc/ecss/ssl/*.key`.
 
-Если секрет попал на скрин/в чат — не повторять; запланировать ротацию.
+Если секрет попал в чат/скрин — запланировать ротацию.
 
 ---
 
 ## 19. Правила продолжения
 
-- `PROJECT_STATE.md` — canonical source of truth.
+- Этот файл — canonical source of truth.
 - Не повторять выполненные этапы.
 - Учитывать отсутствие физического доступа к телефонам.
-- Сначала один Agent 1001 → проверка → затем Agent 1002.
-- Тестовый 2000 не удалять до приёмки 112.
+- Один Agent1001 → проверка → Agent1002.
+- Test 2000/test_cc не удалять до полной приёмки 112.
 - Не менять cluster/license topology без необходимости.
 - Не править штатные файлы ECSS ради интеграции.
 - После каждого существенного этапа обновлять этот файл.
