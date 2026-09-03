@@ -1,7 +1,7 @@
 # ECSS-10 ДП Абай — PROJECT_STATE
 
 **Canonical source of truth для проекта**  
-**Последнее обновление:** 2026-09-03 14:49+05  
+**Последнее обновление:** 2026-09-03 14:46+05  
 **ECSS:** 3.18.0.271
 
 > ## Инструкция для любого нового чата ChatGPT
@@ -33,7 +33,7 @@ ecss1                                         ecss2
 our integration service                      our integration service
  |                                             |
  +-- Call API :8089                            +-- Call API :8089
- +-- CC UI/API :8091                           +-- CC UI/API :8091 (после установки)
+ +-- CC UI/API :8091                           +-- CC UI/API :8091
  +-- SSW :8086                                 +-- SSW :8086
 ```
 
@@ -249,7 +249,7 @@ CONFERENCE = teleconference
 
 ---
 
-## 12. ecss-cc-ui 18.0.34
+## 12. ecss-cc-ui 18.0.34 — установлен на обоих узлах
 
 ### ecss1 — установлен и проверен
 
@@ -271,9 +271,33 @@ SQL/address-book port 5439
 
 Web UI реально открывается на `https://192.168.190.70:8090`.
 
-### ecss2
+### ecss2 — установлен и проверен
 
-`ecss-cc-ui` пока **не установлен на ecss2**. Это следующий этап после успешной функциональной проверки ecss1, которая теперь завершена.
+Установлен пакет:
+
+```text
+ecss-cc-ui 18.0.34 amd64
+```
+
+Подтверждено:
+
+```text
+ecss-cc-ui-api.service active / enabled
+ecss-cc-ui.service     active / enabled
+0.0.0.0:8090           LISTEN nginx/openresty
+0.0.0.0:8091           LISTEN node/MainThread
+```
+
+Конфиг `/etc/ecss/ecss-cc-ui-api/config.yaml` подтверждён:
+
+```text
+ECSS core host localhost
+ECSS core port 8086
+SQL/address-book host localhost
+SQL/address-book port 5439
+```
+
+Пользователь уже успешно выполнил Web login через `ecss2` (`https://192.168.190.80:8090`). Следующий шаг — подтвердить runtime этого login в CoCon и затем исследовать node-local поведение сессий при отказе узла.
 
 ---
 
@@ -294,7 +318,7 @@ http://localhost:8086/<domain>/service/cc/arm/login
 
 с `websocket_control="true"`, получает ECSS cookie/session и CC token.
 
-Практически успешно проверен для Test Agent1/Phone1001, Test Agent2/Phone1002, боевого Agent1001/Phone1001 и боевого Agent1002/Phone1002.
+Практически успешно проверен для Test Agent1/Phone1001, Test Agent2/Phone1002, боевого Agent1001/Phone1001 и боевого Agent1002/Phone1002. Web login через второй UI-узел ecss2 также подтверждён пользователем.
 
 ---
 
@@ -333,24 +357,21 @@ call_state: idle | ringing | talking
 
 ## 16. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
 
-**Не возвращаться** к test 2000, лицензии, VRRP, созданию 1001/1002, поиску WS login, `forceLogout`, `call/makeCall #160`, освобождению Test Agent1/2 или повторной проверке циклов Agent1001/1002 — всё это уже подтверждено.
+**Не возвращаться** к test 2000, лицензии, VRRP, созданию 1001/1002, поиску WS login, `forceLogout`, `call/makeCall #160`, освобождению Test Agent1/2, повторной проверке циклов Agent1001/1002 или установке ecss-cc-ui на ecss1/ecss2 — всё это уже подтверждено.
 
 Продолжать отсюда:
 
-1. **Сейчас:** установить `ecss-cc-ui 18.0.34` на `ecss2` по тому же безопасному сценарию, что на ecss1: сначала dry-run, затем установка.
-2. После установки на ecss2 проверить:
-   ```bash
-   systemctl status ecss-cc-ui-api
-   systemctl status ecss-cc-ui
-   ss -lnt | grep -E ':(8090|8091)\b'
+1. **Сейчас:** после уже успешного Web login через `ecss2` проверить runtime в CoCon:
+   ```text
+   /domain/dp_abai/cc/group/cache-info Abai_112_cc
    ```
-   и открыть `https://192.168.190.80:8090`.
-3. Проверить CC login/status control через ecss2 и понять поведение node-local CC session при отказе одного узла.
-4. Проверить runtime/realtime агентов и очереди (`agents_info_event`, queue state) для будущей интеграции.
-5. Проверить маршрут `112 -> Abai_112` и отдельно решить/проверить `lock_if_no_answer` и `lock_if_reject` перед боевым multicall.
-6. Когда будет физический доступ — end-to-end 112: ring/answer/talking/RTP/CDR.
-7. Затем реализовать `/opt/ecss-integration-api` на ecss1/ecss2 и HA endpoint :443.
-8. После приёмки ротировать integration API key и agent PINs.
+   Цель — увидеть вошедшего агента активным с его Phone.
+2. После подтверждения runtime проверить node-local поведение CC session: что происходит с активной Web-сессией/статусом при остановке `ecss-cc-ui-api` на том узле, через который выполнен login, без затрагивания core/SSW.
+3. Проверить runtime/realtime агентов и очереди (`agents_info_event`, queue state) для будущей интеграции.
+4. Проверить маршрут `112 -> Abai_112` и отдельно решить/проверить `lock_if_no_answer` и `lock_if_reject` перед боевым multicall.
+5. Когда будет физический доступ — end-to-end 112: ring/answer/talking/RTP/CDR.
+6. Затем реализовать `/opt/ecss-integration-api` на ecss1/ecss2 и HA endpoint :443.
+7. После приёмки ротировать integration API key и agent PINs.
 
 ---
 
@@ -401,6 +422,7 @@ ss -lnt | grep -E ':(8089|8090|8091)\b'
 - Не повторять выполненные этапы.
 - Учитывать отсутствие физического доступа к телефонам.
 - Оба боевых агента 1001/1002 полностью функционально проверены.
+- `ecss-cc-ui 18.0.34` установлен и базово проверен на обоих узлах.
 - Test 2000/test_cc не удалять до полной приёмки 112.
 - Не менять cluster/license topology без необходимости.
 - Не править штатные файлы ECSS ради интеграции.
