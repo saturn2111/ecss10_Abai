@@ -1,7 +1,7 @@
 # ECSS-10 ДП Абай — PROJECT_STATE
 
 **Canonical source of truth для проекта**  
-**Последнее обновление:** 2026-09-03  
+**Последнее обновление:** 2026-09-03 14:20+05  
 **ECSS:** 3.18.0.271
 
 > ## Инструкция для любого нового чата ChatGPT
@@ -17,8 +17,6 @@
 ## 1. Цель и архитектура
 
 Двухузловая отказоустойчивая ECSS-10 для ДП области Абай с Call-center и внешней API-интеграцией, до ~1000 абонентов.
-
-Целевая API-схема:
 
 ```text
 External CRM
@@ -135,39 +133,30 @@ JWT/auth state node-local. API key/JWT не хранить; API key после �
 
 Distribution `multicall`; звонок на 2000 вызывал оба SIP. **Не повторять этот этап и пока не удалять test/test_cc.**
 
-Старые Test Agent 1/2 были авторизованы с физических аппаратов через feature code.
+Старые Test Agent1/2 были авторизованы с физических аппаратов через feature code.
 
-### Новый подтверждённый runtime 2026-09-03 14:00
-
-После установки для Test Agent1 свойства:
+Для Test Agent1 применено:
 
 ```text
 /domain/dp_abai/cc/agent/set 1 only_one_session true
 ```
 
-ECSS ответил:
+После повторного Web login Test Agent1 / Phone1001 и Web logout старая телефонная сессия была вытеснена/остановлена.
 
-```text
-ok
-Configuration changes will be applied after re-login
-```
-
-Затем выполнен Web login Test Agent1 / Phone1001 и обычный Web logout.
-
-После этого `/domain/dp_abai/cc/group/cache-info test_cc` показал:
+Текущий подтверждённый `test_cc`:
 
 ```text
 Agent 1  Test 1001  stopped    Phone=1001  Activity=idle
 Agent 2  Test 1002  available  Phone=1002  Activity=idle
 ```
 
-Ключевой факт: старая активная сессия Test Agent1 **остановлена**. Поле `Phone number` при статусе `stopped` всё ещё содержит `1001`; поэтому пока не утверждать, что номер гарантированно свободен — это проверяется следующим login боевого Agent1001.
+Поле Phone=1001 у stopped Agent1 оказалось не блокирующим: боевой Agent1001 затем успешно занял Phone1001.
 
-Agent2/1002 пока не трогать.
+Agent2/1002 пока не трогать до завершения проверки Agent1001.
 
 ---
 
-## 9. Боевая 112 — создана
+## 9. Боевая 112 — создана и Agent1001 успешно вошёл
 
 Группа `Abai_112_cc`:
 
@@ -190,12 +179,14 @@ Queue `Abai_112`, description `ДП Абай 112`.
 - lock_if_reject true;
 - serial_lock_enabled true.
 
-Последний подтверждённый runtime `Abai_112_cc` до нового login:
+**Новый подтверждённый runtime 2026-09-03 14:20:** после Web login боевого Agent1001 с Phone1001:
 
 ```text
-1001 Operator 1 stopped Phone=- Activity=idle
-1002 Operator 2 stopped Phone=- Activity=idle
+1001 Operator 1 available Phone=1001 Activity=idle
+1002 Operator 2 stopped   Phone=-    Activity=idle
 ```
+
+Это подтверждает, что Phone1001 реально освобождён от старого Test Agent1 и штатный Web login боевого агента работает.
 
 ---
 
@@ -221,10 +212,10 @@ Agent PIN/password не хранить и не повторять; перед б
 Сервисы:
 
 ```text
-CRM       = call
-WEB_CC    = cc/common
-CC_AGENT  = cc/arm
-CC_PUBSUB = cc/pubsub
+CRM        = call
+WEB_CC     = cc/common
+CC_AGENT   = cc/arm
+CC_PUBSUB  = cc/pubsub
 CONFERENCE = teleconference
 ```
 
@@ -234,11 +225,7 @@ CONFERENCE = teleconference
 <schema>://<host>:<port>/<domain>/service/<serviceUrl>/<method>
 ```
 
-Для CC Agent endpoint подтверждён:
-
-```text
-cc/arm
-```
+Для CC Agent endpoint подтверждён `cc/arm`.
 
 Операции: `login_agent`, `logout_agent`, `make_available`, `auxwork`, `agent_list`, `agents_list`, `group_list`, `all_queues`, `operator_call_history`, realtime `agents_info_event`.
 
@@ -291,19 +278,13 @@ http://localhost:8086/<domain>/service/cc/arm/login
 
 с `websocket_control="true"`, получает ECSS cookie/session и CC token.
 
-Практически успешно проверен для Test Agent1 / Phone1001 / profile default / domain dp_abai.
+Практически успешно проверен для Test Agent1/Phone1001 и боевого Agent1001/Phone1001.
 
 ---
 
-## 14. forceLogout — найден, но обычному Agent1 запрещён
+## 14. forceLogout — найден, но обычному агенту запрещён
 
-WS action:
-
-```text
-operator/forceLogout
-```
-
-Профиль Test Agent1 `default` имеет:
+WS action `operator/forceLogout` найден. Профиль Test Agent1 `default` имеет:
 
 ```text
 force_logout=false
@@ -319,7 +300,7 @@ code=5
 message="You are not allowed for this command"
 ```
 
-Не повторять `operator/forceLogout` обычным Agent1.
+Не повторять `operator/forceLogout` обычным агентом.
 
 ---
 
@@ -352,24 +333,21 @@ call_state: idle | ringing | talking
 
 ## 16. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
 
-**Не возвращаться** к установке ecss-cc-ui на ecss1, test 2000, лицензии, VRRP, созданию 1001/1002, поиску WS login, `forceLogout` обычным Agent1 или `call/makeCall #160`.
+**Не возвращаться** к установке ecss-cc-ui на ecss1, test 2000, лицензии, VRRP, созданию 1001/1002, поиску WS login, `forceLogout` обычным агентом или `call/makeCall #160`.
 
 Продолжать отсюда:
 
-1. **Сейчас:** через `ecss-cc-ui` выполнить login боевого Agent1001 с Phone1001, domain `dp_abai`, profile `default`/разрешённый операторский профиль. Пароль только локально.
-2. Сразу проверить:
-   ```text
-   /domain/dp_abai/cc/group/cache-info Abai_112_cc
-   ```
-   Цель: Agent1001 status `available` (или другой активный, но не `stopped`) и Phone1001.
-3. Если login Agent1001 с Phone1001 не проходит — не менять Test Agent2; сохранить точный ответ UI/API и проверить `cache-info test_cc` + `Abai_112_cc`.
-4. После успешного login Agent1001 проверить AuxWork → Available → Web Logout и realtime изменения.
-5. Только после успешного Agent1001 повторить освобождение/проверку для 1002; Agent2 пока не трогать.
+1. **Сейчас:** для уже вошедшего боевого Agent1001 проверить смену статуса `Available → AuxWork` через Web UI и сразу проверить `/domain/dp_abai/cc/group/cache-info Abai_112_cc`.
+2. Затем вернуть Agent1001 в `Available` и снова проверить cache-info.
+3. Затем обычный Web Logout Agent1001 и проверить, что он становится `stopped` (Phone может сохранять последнее значение — ориентироваться прежде всего на Status).
+4. После полного цикла Agent1001 освободить старую Test Agent2/Phone1002 аналогично через `only_one_session=true`, Web login/logout Test Agent2, затем войти боевым Agent1002/Phone1002.
+5. Проверить AuxWork → Available → Logout для Agent1002.
 6. После функциональной проверки установить `ecss-cc-ui 18.0.34` на ecss2 и проверить 8090/8091.
-7. Проверить маршрут `112 -> Abai_112` и lock flags.
-8. Когда будет физический доступ — end-to-end 112: ring/answer/talking/RTP/CDR.
-9. Затем реализовать `/opt/ecss-integration-api` на ecss1/ecss2 и HA endpoint :443.
-10. После приёмки ротировать integration API key и agent PINs.
+7. Проверить runtime/realtime агентов и очереди.
+8. Проверить маршрут `112 -> Abai_112` и отдельно решить/проверить `lock_if_no_answer` и `lock_if_reject` перед боевым multicall.
+9. Когда будет физический доступ — end-to-end 112: ring/answer/talking/RTP/CDR.
+10. Затем реализовать `/opt/ecss-integration-api` на ecss1/ecss2 и HA endpoint :443.
+11. После приёмки ротировать integration API key и agent PINs.
 
 ---
 
