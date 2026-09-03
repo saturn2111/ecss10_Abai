@@ -1,7 +1,7 @@
 # ECSS-10 ДП Абай — PROJECT_STATE
 
 **Canonical source of truth для проекта**  
-**Последнее обновление:** 2026-09-03 14:37+05  
+**Последнее обновление:** 2026-09-03 14:42+05  
 **ECSS:** 3.18.0.271
 
 > ## Инструкция для любого нового чата ChatGPT
@@ -190,18 +190,25 @@ Web Logout     -> stopped   Phone=1001
 
 Agent1001 функционально проверен: login, AuxWork, Available, logout.
 
-### Agent1002 — боевой login подтверждён
+### Agent1002 — login и AuxWork подтверждены
 
 После остановки старой Test Agent2 / Phone1002 сессии выполнен Web login боевого Agent1002 / Phone1002.
 
-**Подтверждённый runtime `Abai_112_cc` 2026-09-03 14:37:**
+Подтверждено:
 
 ```text
-1001 Operator 1 stopped   Phone=1001 Activity=idle
-1002 Operator 2 available Phone=1002 Activity=idle
+Web Login      -> available Phone=1002
+Available      -> AuxWork   Phone=1002
 ```
 
-Это подтверждает, что Phone1002 реально освобождён и успешно занят боевым Agent1002.
+**Текущий runtime `Abai_112_cc` 2026-09-03 14:42:**
+
+```text
+1001 Operator 1 stopped Phone=1001 Activity=idle
+1002 Operator 2 auxwork Phone=1002 Activity=idle
+```
+
+Следующий шаг для Agent1002 — вернуть AuxWork → Available, затем Web Logout → stopped.
 
 ---
 
@@ -334,19 +341,18 @@ call_state: idle | ringing | talking
 
 Продолжать отсюда:
 
-1. **Сейчас:** для уже вошедшего боевого Agent1002 проверить `Available → AuxWork` через Web UI и сразу проверить:
+1. **Сейчас:** вернуть боевого Agent1002 из `AuxWork` в `Available` через Web UI и проверить:
    ```text
    /domain/dp_abai/cc/group/cache-info Abai_112_cc
    ```
-2. Затем вернуть Agent1002 в `Available` и снова проверить cache-info.
-3. Затем обычный Web Logout Agent1002 и проверить `stopped`.
-4. После полного цикла Agent1002 оба боевых агента будут функционально проверены.
-5. После этого установить `ecss-cc-ui 18.0.34` на ecss2 и проверить 8090/8091.
-6. Проверить runtime/realtime агентов и очереди.
-7. Проверить маршрут `112 -> Abai_112` и отдельно решить/проверить `lock_if_no_answer` и `lock_if_reject` перед боевым multicall.
-8. Когда будет физический доступ — end-to-end 112: ring/answer/talking/RTP/CDR.
-9. Затем реализовать `/opt/ecss-integration-api` на ecss1/ecss2 и HA endpoint :443.
-10. После приёмки ротировать integration API key и agent PINs.
+2. Затем обычный Web Logout Agent1002 и проверить `stopped`.
+3. После полного цикла Agent1002 оба боевых агента будут функционально проверены.
+4. После этого установить `ecss-cc-ui 18.0.34` на ecss2 и проверить 8090/8091.
+5. Проверить runtime/realtime агентов и очереди.
+6. Проверить маршрут `112 -> Abai_112` и отдельно решить/проверить `lock_if_no_answer` и `lock_if_reject` перед боевым multicall.
+7. Когда будет физический доступ — end-to-end 112: ring/answer/talking/RTP/CDR.
+8. Затем реализовать `/opt/ecss-integration-api` на ecss1/ecss2 и HA endpoint :443.
+9. После приёмки ротировать integration API key и agent PINs.
 
 ---
 
@@ -396,7 +402,7 @@ ss -lnt | grep -E ':(8089|8090|8091)\b'
 - Этот файл — canonical source of truth.
 - Не повторять выполненные этапы.
 - Учитывать отсутствие физического доступа к телефонам.
-- Agent1001 полностью проверен; сейчас завершаем полный цикл Agent1002.
+- Agent1001 полностью проверен; Agent1002 сейчас подтверждён до состояния AuxWork.
 - Test 2000/test_cc не удалять до полной приёмки 112.
 - Не менять cluster/license topology без необходимости.
 - Не править штатные файлы ECSS ради интеграции.
