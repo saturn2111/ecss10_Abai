@@ -1,7 +1,7 @@
 # ECSS-10 ДП Абай — PROJECT_STATE
 
 **Canonical source of truth для проекта**  
-**Последнее обновление:** 2026-09-03 14:46+05  
+**Последнее обновление:** 2026-09-03 15:01+05  
 **ECSS:** 3.18.0.271
 
 > ## Инструкция для любого нового чата ChatGPT
@@ -195,14 +195,14 @@ AuxWork        -> Available Phone=1002
 Web Logout     -> stopped   Phone=1002
 ```
 
-**Последний подтверждённый runtime `Abai_112_cc` 2026-09-03 14:49:**
+После Web login через `ecss2` подтверждён runtime 2026-09-03 15:01:
 
 ```text
-1001 Operator 1 stopped Phone=1001 Activity=idle
-1002 Operator 2 stopped Phone=1002 Activity=idle
+1001 Operator 1 available Phone=1001 Activity=idle
+1002 Operator 2 stopped   Phone=1002 Activity=idle
 ```
 
-Итог: оба боевых агента 1001/1002 функционально проверены через штатный `ecss-cc-ui`: login, AuxWork, Available, logout. Номера 1001/1002 больше не заблокированы старыми Test Agent1/2.
+Итог: оба боевых агента 1001/1002 функционально проверены через штатный `ecss-cc-ui`: login, AuxWork, Available, logout. Web login через второй UI-узел ecss2 также реально изменяет общий CC runtime.
 
 ---
 
@@ -297,7 +297,7 @@ SQL/address-book host localhost
 SQL/address-book port 5439
 ```
 
-Пользователь уже успешно выполнил Web login через `ecss2` (`https://192.168.190.80:8090`). Следующий шаг — подтвердить runtime этого login в CoCon и затем исследовать node-local поведение сессий при отказе узла.
+Web login через `ecss2` (`https://192.168.190.80:8090`) и его влияние на общий runtime подтверждены: Agent1001 стал `available Phone=1001`.
 
 ---
 
@@ -318,7 +318,7 @@ http://localhost:8086/<domain>/service/cc/arm/login
 
 с `websocket_control="true"`, получает ECSS cookie/session и CC token.
 
-Практически успешно проверен для Test Agent1/Phone1001, Test Agent2/Phone1002, боевого Agent1001/Phone1001 и боевого Agent1002/Phone1002. Web login через второй UI-узел ecss2 также подтверждён пользователем.
+Практически успешно проверен для Test Agent1/Phone1001, Test Agent2/Phone1002, боевого Agent1001/Phone1001 и боевого Agent1002/Phone1002. Web login через второй UI-узел ecss2 также подтверждён.
 
 ---
 
@@ -328,23 +328,51 @@ WS action `operator/forceLogout` найден. Профиль обычного �
 
 ---
 
-## 15. Требования внешнего API
+## 15. Требования внешней интеграции — получен контракт от разработчиков
 
-Наружу нужно дать:
+Получен документ «Интеграция с телефонией: состав данных» (5 страниц).
 
-- очереди/группы и состав операторов;
-- availability/status;
-- ready / away(AuxWork) / logout;
-- caller/callee;
-- очередь вызова;
-- кто ответил;
-- start/ringing/answer/end;
-- wait/talk time;
-- answered/missed;
-- history;
-- realtime events.
+Минимально разработчикам нужны два события одного звонка:
 
-Внешняя модель:
+```text
+answered  — оператор ответил
+finished  — разговор завершён
+```
+
+Оба события должны иметь один и тот же уникальный `Id`.
+
+Требуемый объект:
+
+```text
+Id            string  обязательно, стабилен в течение звонка
+Status        string  answered | finished
+Direction     string  inbound | outbound
+NumberA       string  внешний абонент
+NumberB       string  внутренний номер реально обслужившего/ответившего оператора
+Duration      integer предпочтительно секунды; обязателен для finished
+CallRecordUrl string  при наличии
+```
+
+Предварительное соответствие ECSS:
+
+- `Id` — брать стабильный call/conversation identifier из Call API и использовать его для всех событий одного звонка;
+- `Status=answered` — формировать только после фактического ответа оператора, не на стадии alerting;
+- `Status=finished` — формировать после released/end для уже отвеченного звонка;
+- `Direction` — определять из направления вызова;
+- `NumberA` — внешний caller/callee в зависимости от направления;
+- `NumberB` — фактический внутренний номер оператора, ответившего на вызов; для multicall нельзя подставлять номер очереди;
+- `Duration` — фактическое talk time от answer до end, в секундах;
+- `CallRecordUrl` — пока не подтверждено, требует отдельной проверки механизма записи/публикации записи ECSS.
+
+Критические точки для проверки до реализации:
+
+1. Какой именно идентификатор Call API остаётся стабильным при queue/multicall и между событиями answer/end.
+2. Как однозначно определить победившего оператора/`NumberB` при `multicall`.
+3. Какие реальные события Call API/CC API соответствуют answer и finished на входящем 112.
+4. Где и когда появляется запись разговора и можно ли сформировать HTTP(S) URL.
+5. Пропущенные/неотвеченные звонки в документе пока не описаны — минимальный контракт требует только answered/finished.
+
+Внешняя модель операторов дополнительно остаётся:
 
 ```text
 availability_status: ready | away | offline
@@ -361,17 +389,14 @@ call_state: idle | ringing | talking
 
 Продолжать отсюда:
 
-1. **Сейчас:** после уже успешного Web login через `ecss2` проверить runtime в CoCon:
-   ```text
-   /domain/dp_abai/cc/group/cache-info Abai_112_cc
-   ```
-   Цель — увидеть вошедшего агента активным с его Phone.
-2. После подтверждения runtime проверить node-local поведение CC session: что происходит с активной Web-сессией/статусом при остановке `ecss-cc-ui-api` на том узле, через который выполнен login, без затрагивания core/SSW.
-3. Проверить runtime/realtime агентов и очереди (`agents_info_event`, queue state) для будущей интеграции.
+1. **Сейчас:** зафиксировать технический mapping контракта разработчиков `answered/finished` на реальные события ECSS Call API/CC API. Нужны стабильный `Id`, фактический `NumberB` при multicall и talk duration.
+2. Проверить runtime/realtime агентов и очереди (`agents_info_event`, queue state) и найти события, позволяющие однозначно определить ответившего оператора.
+3. Проверить node-local поведение CC Web session при отказе `ecss-cc-ui-api` одного узла, без остановки core/SSW.
 4. Проверить маршрут `112 -> Abai_112` и отдельно решить/проверить `lock_if_no_answer` и `lock_if_reject` перед боевым multicall.
-5. Когда будет физический доступ — end-to-end 112: ring/answer/talking/RTP/CDR.
-6. Затем реализовать `/opt/ecss-integration-api` на ecss1/ecss2 и HA endpoint :443.
-7. После приёмки ротировать integration API key и agent PINs.
+5. Когда будет физический доступ — end-to-end 112: inbound call → multicall → answer → talking → end → RTP/CDR; на этом же тесте снять реальные payloads для `answered/finished`.
+6. Отдельно исследовать запись разговора и `CallRecordUrl`.
+7. Затем реализовать `/opt/ecss-integration-api` на ecss1/ecss2 и HA endpoint :443, выдающий разработчикам согласованный JSON-контракт.
+8. После приёмки ротировать integration API key и agent PINs.
 
 ---
 
@@ -423,6 +448,8 @@ ss -lnt | grep -E ':(8089|8090|8091)\b'
 - Учитывать отсутствие физического доступа к телефонам.
 - Оба боевых агента 1001/1002 полностью функционально проверены.
 - `ecss-cc-ui 18.0.34` установлен и базово проверен на обоих узлах.
+- Web login через ecss2 и влияние на общий CC runtime подтверждены.
+- Получен минимальный JSON-контракт интеграции answered/finished; следующий этап — точное сопоставление с событиями ECSS.
 - Test 2000/test_cc не удалять до полной приёмки 112.
 - Не менять cluster/license topology без необходимости.
 - Не править штатные файлы ECSS ради интеграции.
