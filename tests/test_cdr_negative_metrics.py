@@ -64,6 +64,38 @@ class NegativeCdrMetricTests(unittest.TestCase):
         self.assertIsNone(result["answer_delay_seconds"])
         self.assertTrue(result["operator_duration_confirmed"])
 
+    def test_infinite_duration_fails_closed_without_parser_crash(self) -> None:
+        path = self._write("CONN_ID,T_ECD,T_DBA\ncaller-ref,0,0\noperator-ref,inf,3\n")
+        try:
+            records = load_cdr(path)
+            result = analyze_queue_call(
+                records,
+                caller_call_ref="caller-ref",
+                operator_call_ref="operator-ref",
+            )
+        finally:
+            path.unlink(missing_ok=True)
+
+        self.assertIsNone(records[1].conversation_seconds)
+        self.assertEqual(result["selection_reason"], "invalid_operator_t_ecd")
+        self.assertFalse(result["operator_duration_confirmed"])
+
+    def test_infinite_answer_delay_is_not_exposed(self) -> None:
+        path = self._write("CONN_ID,T_ECD,T_DBA\ncaller-ref,0,0\noperator-ref,12,-inf\n")
+        try:
+            records = load_cdr(path)
+            result = analyze_queue_call(
+                records,
+                caller_call_ref="caller-ref",
+                operator_call_ref="operator-ref",
+            )
+        finally:
+            path.unlink(missing_ok=True)
+
+        self.assertEqual(result["duration_seconds"], 12)
+        self.assertIsNone(result["answer_delay_seconds"])
+        self.assertTrue(result["operator_duration_confirmed"])
+
 
 if __name__ == "__main__":
     unittest.main()

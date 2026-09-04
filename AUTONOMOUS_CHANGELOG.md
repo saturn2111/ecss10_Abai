@@ -1,5 +1,12 @@
 # Autonomous development changelog
 
+## 2026-09-05 — Non-finite CDR metric guard
+
+- Hardened `_to_int(...)` so non-finite numeric strings such as `inf`/`-inf` fail closed instead of raising `OverflowError` during offline CDR parsing.
+- Non-finite `T_ECD` is treated as unavailable and cannot confirm operator duration; non-finite `T_DBA` is not exposed as answer delay.
+- Added synthetic regression tests for infinite duration and answer-delay inputs while preserving valid positive duration handling.
+- This remains offline correlation tooling only. No ECSS production configuration or live 112 state was changed, and a real captured queue CDR is still required for final live mapping.
+
 ## 2026-09-05 — Invalid operator T_ECD selection guard
 
 - Hardened the offline queue CDR analyzer so a single operator record with malformed, blank, or negative `T_ECD` is not selected as the duration source.

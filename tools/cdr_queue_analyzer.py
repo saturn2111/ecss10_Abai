@@ -25,7 +25,7 @@ def _to_int(value: str | None) -> int | None:
         return None
     try:
         parsed = int(float(text.replace(",", ".")))
-    except ValueError:
+    except (ValueError, OverflowError):
         return None
     return parsed if parsed >= 0 else None
 
