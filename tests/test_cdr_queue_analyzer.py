@@ -87,6 +87,14 @@ class CdrQueueAnalyzerTests(unittest.TestCase):
         finally:
             path.unlink(missing_ok=True)
 
+    def test_duplicate_required_column_fails_closed(self) -> None:
+        path = self._write("CONN_ID,T_ECD,T_ECD,T_DBA\nref,10,999,2\n")
+        try:
+            with self.assertRaisesRegex(ValueError, "duplicate required columns: T_ECD"):
+                load_cdr(path)
+        finally:
+            path.unlink(missing_ok=True)
+
 
 if __name__ == "__main__":
     unittest.main()
