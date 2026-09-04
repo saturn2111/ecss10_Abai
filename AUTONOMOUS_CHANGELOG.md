@@ -1,5 +1,13 @@
 # Autonomous development changelog
 
+## 2026-09-05 — Explicit CDR correlation evidence
+
+- Extended the offline queue-call analyzer with `caller_ref_matched`, `operator_ref_matched`, and `both_refs_matched` so reports distinguish observed evidence from inferred correlation.
+- The new fields are derived only from exact `CONN_ID == call_ref` matches; no logical call id, operator identity, or missing caller record is guessed.
+- Added synthetic tests for complete two-ref evidence, missing operator evidence, operator-only evidence, blank refs, and same-ref ambiguity.
+- Existing operator-duration selection semantics remain unchanged: an exact unambiguous operator record may expose `T_ECD`, while the evidence flags separately show whether both captured refs were present.
+- This remains offline tooling only. No ECSS production configuration or live 112 state was changed, and the real captured queue CDR is still required for final live mapping.
+
 ## 2026-09-05 — Non-finite CDR metric guard
 
 - Hardened `_to_int(...)` so non-finite numeric strings such as `inf`/`-inf` fail closed instead of raising `OverflowError` during offline CDR parsing.
