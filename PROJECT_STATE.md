@@ -365,6 +365,12 @@ released без ранее подтверждённого operator answered
 
 Продолжать отсюда:
 
+Подготовлено 2026-09-04 без подмены live-данных:
+- добавлен offline-инструмент `tools/cdr_queue_analyzer.py` для сопоставления CDR `CONN_ID` с двумя сохранёнными `call_ref`;
+- analyzer требует явные caller/operator `call_ref`, не пытается угадывать logical call id и fail-closed при отсутствии operator record;
+- synthetic unit tests проверяют CSV с запятой/точкой с запятой, выбор operator `T_ECD` и отсутствие догадок при пропущенной записи;
+- никаких новых выводов о реальном queue-call без фактического CDR не зафиксировано.
+
 1. **Сейчас:** дождаться/получить `cdr_dp_abai_default_20260903_17_00_00_p.csv`, который должен содержать live queue-вызов `1001 -> 112 -> Operator2` 16:21–16:22.
 2. В этом CDR сопоставить `CONN_ID` с обоими `call_ref` live listener и определить, какая record содержит операторский разговор и `T_ECD`.
 3. После этого окончательно зафиксировать алгоритм `Duration` и `finished` для queue-call.
