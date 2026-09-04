@@ -28,6 +28,24 @@ class NegativeCdrMetricTests(unittest.TestCase):
 
         self.assertIsNone(records[1].conversation_seconds)
         self.assertIsNone(result["duration_seconds"])
+        self.assertEqual(result["selection_reason"], "invalid_operator_t_ecd")
+        self.assertIsNone(result["selected_operator_conn_id"])
+        self.assertFalse(result["operator_duration_confirmed"])
+
+    def test_malformed_duration_is_not_selected(self) -> None:
+        path = self._write("CONN_ID,T_ECD,T_DBA\ncaller-ref,0,0\noperator-ref,not-a-number,3\n")
+        try:
+            records = load_cdr(path)
+            result = analyze_queue_call(
+                records,
+                caller_call_ref="caller-ref",
+                operator_call_ref="operator-ref",
+            )
+        finally:
+            path.unlink(missing_ok=True)
+
+        self.assertEqual(result["selection_reason"], "invalid_operator_t_ecd")
+        self.assertIsNone(result["duration_seconds"])
         self.assertFalse(result["operator_duration_confirmed"])
 
     def test_negative_answer_delay_is_not_exposed(self) -> None:

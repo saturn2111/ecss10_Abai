@@ -1,5 +1,12 @@
 # Autonomous development changelog
 
+## 2026-09-05 — Invalid operator T_ECD selection guard
+
+- Hardened the offline queue CDR analyzer so a single operator record with malformed, blank, or negative `T_ECD` is not selected as the duration source.
+- Such input now reports deterministic `selection_reason=invalid_operator_t_ecd`, leaves `selected_operator_conn_id`/duration unavailable, and cannot confirm operator duration.
+- Added synthetic regression coverage for negative and malformed operator `T_ECD` while preserving valid positive duration behavior.
+- This remains offline correlation tooling only. No ECSS production configuration or live 112 state was changed, and the real queue CDR is still required for final live mapping.
+
 ## 2026-09-05 — Negative CDR metric guard
 
 - Hardened offline CDR parsing so negative elapsed-time values in `T_ECD` or `T_DBA` are treated as invalid (`None`) rather than accepted as durations.
