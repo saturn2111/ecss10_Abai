@@ -78,6 +78,34 @@ class CdrQueueAnalyzerTests(unittest.TestCase):
         self.assertEqual(result["selection_reason"], "no_operator_record")
         self.assertFalse(result["operator_duration_confirmed"])
 
+    def test_same_call_ref_is_rejected_as_ambiguous(self) -> None:
+        path = self._write(
+            "CONN_ID,T_ECD,T_DBA\n"
+            "same-ref,51,4\n"
+        )
+        try:
+            result = analyze_queue_call(
+                load_cdr(path),
+                caller_call_ref=" same-ref ",
+                operator_call_ref="same-ref",
+            )
+        finally:
+            path.unlink(missing_ok=True)
+
+        self.assertEqual(result["selection_reason"], "ambiguous_same_call_ref")
+        self.assertIsNone(result["duration_seconds"])
+        self.assertFalse(result["operator_duration_confirmed"])
+
+    def test_blank_call_ref_is_rejected(self) -> None:
+        result = analyze_queue_call(
+            (),
+            caller_call_ref=" ",
+            operator_call_ref="operator-ref",
+        )
+
+        self.assertEqual(result["selection_reason"], "missing_call_ref")
+        self.assertFalse(result["operator_duration_confirmed"])
+
     def test_missing_required_column_fails_closed(self) -> None:
         path = self._write("CONN_ID,T_ECD\nref,10\n")
         try:
