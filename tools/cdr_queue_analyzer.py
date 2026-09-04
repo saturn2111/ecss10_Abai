@@ -81,6 +81,37 @@ def analyze_queue_call(
     caller_call_ref: str,
     operator_call_ref: str,
 ) -> dict[str, object]:
+    caller_call_ref = caller_call_ref.strip()
+    operator_call_ref = operator_call_ref.strip()
+
+    if not caller_call_ref or not operator_call_ref:
+        return {
+            "caller_call_ref": caller_call_ref,
+            "operator_call_ref": operator_call_ref,
+            "caller_record_count": 0,
+            "operator_record_count": 0,
+            "matched_record_count": 0,
+            "selected_operator_conn_id": None,
+            "duration_seconds": None,
+            "answer_delay_seconds": None,
+            "selection_reason": "missing_call_ref",
+            "operator_duration_confirmed": False,
+        }
+
+    if caller_call_ref == operator_call_ref:
+        return {
+            "caller_call_ref": caller_call_ref,
+            "operator_call_ref": operator_call_ref,
+            "caller_record_count": 0,
+            "operator_record_count": 0,
+            "matched_record_count": 0,
+            "selected_operator_conn_id": None,
+            "duration_seconds": None,
+            "answer_delay_seconds": None,
+            "selection_reason": "ambiguous_same_call_ref",
+            "operator_duration_confirmed": False,
+        }
+
     record_list = tuple(records)
     matches = matching_records(record_list, (caller_call_ref, operator_call_ref))
 
