@@ -1,0 +1,112 @@
+name: ECSS10 Abai Autonomous Gate
+
+on:
+  push:
+    branches:
+      - 'ai/**'
+
+jobs:
+  project-state:
+    runs-on: python312
+
+    steps:
+      - name: Checkout
+        uses: https://data.forgejo.org/actions/checkout@v4
+
+      - name: Prepare feedback
+        run: |
+          rm -rf .ci-feedback
+          mkdir -p .ci-feedback
+
+      - name: Validate project state
+        run: |
+          python - <<'PY' > .ci-feedback/validation.log 2>&1
+          from pathlib import Path
+          import sys
+
+          path = Path("PROJECT_STATE.md")
+          errors = []
+
+          if not path.is_file():
+              errors.append("PROJECT_STATE.md is missing")
+          else:
+              try:
+                  text = path.read_text(encoding="utf-8")
+              except UnicodeDecodeError as exc:
+                  errors.append(f"PROJECT_STATE.md is not valid UTF-8: {exc}")
+                  text = ""
+
+              required_headings = [
+                  "# ECSS-10 ДП Абай — PROJECT_STATE",
+                  "## 1. Архитектура",
+                  "## 6. Call API :8089 — выполнено",
+                  "## 9. Боевая 112 — очередь/агенты/IVR/маршрут",
+                  "## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ",
+                  "## 17. Security",
+              ]
+
+              for heading in required_headings:
+                  if heading not in text:
+                      errors.append(f"missing required heading: {heading}")
+
+              if any(marker in text for marker in ("<<<<<<<", "=======", ">>>>>>>")):
+                  errors.append("PROJECT_STATE.md contains unresolved merge-conflict markers")
+
+              if len(text.strip()) < 1000:
+                  errors.append("PROJECT_STATE.md is unexpectedly short")
+
+          if errors:
+              print("\n".join(errors))
+              sys.exit(1)
+
+          print("ECSS10 Abai PROJECT_STATE validation OK")
+          PY
+
+          cat .ci-feedback/validation.log
+
+      - name: Auto-merge green AI branch
+        if: ${{ success() }}
+        run: |
+          AI_BRANCH="${FORGEJO_REF#refs/heads/}"
+
+          git config user.name "ECSS10 Autonomous Developer"
+          git config user.email "autodev@ecss10.local"
+
+          git fetch --unshallow origin 2>/dev/null || true
+          git fetch origin             "+refs/heads/main:refs/remotes/origin/main"             "+refs/heads/$AI_BRANCH:refs/remotes/origin/$AI_BRANCH"
+
+          git checkout -B ai-automerge-base origin/main
+          git merge-base origin/main "origin/$AI_BRANCH"
+          git merge --no-ff "origin/$AI_BRANCH" -m "Autonomous merge of $AI_BRANCH"
+          git push origin HEAD:main
+
+      - name: Publish CI feedback
+        if: ${{ always() }}
+        env:
+          FINAL_STATUS: ${{ job.status }}
+        run: |
+          {
+            echo "status=$FINAL_STATUS"
+            echo "sha=$FORGEJO_SHA"
+            echo "ref=$FORGEJO_REF"
+            echo "run_id=$FORGEJO_RUN_ID"
+            echo "run_number=$FORGEJO_RUN_NUMBER"
+            echo "repository=$FORGEJO_REPOSITORY"
+          } > .ci-feedback/status.txt
+
+          REPORT_DIR=/tmp/ecss10-ci-feedback
+          rm -rf "$REPORT_DIR"
+          mkdir -p "$REPORT_DIR"
+          cp -a .ci-feedback/. "$REPORT_DIR/"
+
+          git config user.name "ECSS10 Local CI"
+          git config user.email "ci@ecss10.local"
+
+          git checkout -B ci-feedback
+          rm -rf ci-feedback
+          mkdir -p ci-feedback
+          cp -a "$REPORT_DIR/." ci-feedback/
+
+          git add -f ci-feedback
+          git commit -m "CI feedback for $FORGEJO_SHA: $FINAL_STATUS [skip ci]"
+          git push --force origin HEAD:refs/heads/ci-feedback
