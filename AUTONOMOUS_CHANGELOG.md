@@ -1,5 +1,12 @@
 # Autonomous development changelog
 
+## 2026-09-05 — Negative CDR metric guard
+
+- Hardened offline CDR parsing so negative elapsed-time values in `T_ECD` or `T_DBA` are treated as invalid (`None`) rather than accepted as durations.
+- A negative operator `T_ECD` can no longer produce a confirmed queue-call duration; a valid positive duration can still be confirmed while an invalid negative answer delay remains unavailable.
+- Added synthetic regression coverage for negative conversation duration and answer delay.
+- This is offline correlation tooling only. No ECSS production configuration or live 112 state was changed, and the real captured queue CDR is still required for final live mapping.
+
 ## 2026-09-04 — CDR distinct call-ref guard
 
 - Hardened the offline queue CDR analyzer so caller and operator `call_ref` values must be present and distinct.
