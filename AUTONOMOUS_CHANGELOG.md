@@ -1,5 +1,13 @@
 # Autonomous development changelog
 
+## 2026-09-05 — Exact-ref correlation evidence state
+
+- Added deterministic `correlation_evidence` to the offline queue-call analyzer, derived only from exact caller/operator `CONN_ID == call_ref` record counts.
+- Evidence states distinguish `both_refs_unique`, `both_refs_present_with_duplicates`, `partial_ref_match`, and `no_ref_match`; invalid/missing/same-ref input reports `not_evaluated`.
+- The field is descriptive evidence only: it does not infer a shared logical call id, operator identity, queue membership, or duration correctness.
+- Added synthetic regression tests for unique, duplicate, partial, no-match, and invalid-ref evidence states.
+- No ECSS production configuration or live 112 state was changed. The captured real queue CDR is still required for final live mapping.
+
 ## 2026-09-05 — Explicit CDR correlation evidence
 
 - Extended the offline queue-call analyzer with `caller_ref_matched`, `operator_ref_matched`, and `both_refs_matched` so reports distinguish observed evidence from inferred correlation.

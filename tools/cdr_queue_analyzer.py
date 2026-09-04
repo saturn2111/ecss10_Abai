@@ -84,6 +84,18 @@ def matching_records(
     return tuple(record for record in records if record.conn_id in wanted)
 
 
+def correlation_evidence(caller_record_count: int, operator_record_count: int) -> str:
+    """Describe exact-ref evidence without inferring a logical call relationship."""
+
+    if caller_record_count == 1 and operator_record_count == 1:
+        return "both_refs_unique"
+    if caller_record_count > 0 and operator_record_count > 0:
+        return "both_refs_present_with_duplicates"
+    if caller_record_count > 0 or operator_record_count > 0:
+        return "partial_ref_match"
+    return "no_ref_match"
+
+
 def analyze_queue_call(
     records: Iterable[CdrRecord],
     *,
@@ -140,6 +152,9 @@ def analyze_queue_call(
         "caller_ref_matched": caller_ref_matched,
         "operator_ref_matched": operator_ref_matched,
         "both_refs_matched": caller_ref_matched and operator_ref_matched,
+        "correlation_evidence": correlation_evidence(
+            len(caller_records), len(operator_records)
+        ),
         "selected_operator_conn_id": selected_operator.conn_id if selected_operator else None,
         "duration_seconds": selected_operator.conversation_seconds if selected_operator else None,
         "answer_delay_seconds": selected_operator.answer_delay_seconds if selected_operator else None,
@@ -162,6 +177,7 @@ def _empty_result(caller_call_ref: str, operator_call_ref: str, reason: str) -> 
         "caller_ref_matched": False,
         "operator_ref_matched": False,
         "both_refs_matched": False,
+        "correlation_evidence": "not_evaluated",
         "selected_operator_conn_id": None,
         "duration_seconds": None,
         "answer_delay_seconds": None,
