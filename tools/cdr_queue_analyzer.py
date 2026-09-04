@@ -85,32 +85,10 @@ def analyze_queue_call(
     operator_call_ref = operator_call_ref.strip()
 
     if not caller_call_ref or not operator_call_ref:
-        return {
-            "caller_call_ref": caller_call_ref,
-            "operator_call_ref": operator_call_ref,
-            "caller_record_count": 0,
-            "operator_record_count": 0,
-            "matched_record_count": 0,
-            "selected_operator_conn_id": None,
-            "duration_seconds": None,
-            "answer_delay_seconds": None,
-            "selection_reason": "missing_call_ref",
-            "operator_duration_confirmed": False,
-        }
+        return _empty_result(caller_call_ref, operator_call_ref, "missing_call_ref")
 
     if caller_call_ref == operator_call_ref:
-        return {
-            "caller_call_ref": caller_call_ref,
-            "operator_call_ref": operator_call_ref,
-            "caller_record_count": 0,
-            "operator_record_count": 0,
-            "matched_record_count": 0,
-            "selected_operator_conn_id": None,
-            "duration_seconds": None,
-            "answer_delay_seconds": None,
-            "selection_reason": "ambiguous_same_call_ref",
-            "operator_duration_confirmed": False,
-        }
+        return _empty_result(caller_call_ref, operator_call_ref, "ambiguous_same_call_ref")
 
     record_list = tuple(records)
     matches = matching_records(record_list, (caller_call_ref, operator_call_ref))
@@ -121,11 +99,8 @@ def analyze_queue_call(
 
     caller_records = by_ref.get(caller_call_ref, [])
     operator_records = by_ref.get(operator_call_ref, [])
-
     operator_positive = [
-        item
-        for item in operator_records
-        if (item.conversation_seconds or 0) > 0
+        item for item in operator_records if (item.conversation_seconds or 0) > 0
     ]
 
     selected_operator: CdrRecord | None = None
@@ -133,15 +108,16 @@ def analyze_queue_call(
     if len(operator_positive) == 1:
         selected_operator = operator_positive[0]
         selection_reason = "single_positive_t_ecd_operator_record"
+    elif len(operator_positive) > 1:
+        # Multiple positive rows for the same operator call_ref are ambiguous.
+        # Do not guess by selecting the largest T_ECD; the actual live CDR must
+        # establish the semantics before Duration can be considered confirmed.
+        selection_reason = "ambiguous_multiple_positive_operator_records"
     elif len(operator_records) == 1:
         selected_operator = operator_records[0]
         selection_reason = "single_operator_record"
-    elif operator_positive:
-        selected_operator = max(
-            operator_positive,
-            key=lambda item: item.conversation_seconds or 0,
-        )
-        selection_reason = "largest_positive_t_ecd_operator_record"
+    elif len(operator_records) > 1:
+        selection_reason = "ambiguous_multiple_operator_records"
 
     return {
         "caller_call_ref": caller_call_ref,
@@ -149,21 +125,30 @@ def analyze_queue_call(
         "caller_record_count": len(caller_records),
         "operator_record_count": len(operator_records),
         "matched_record_count": len(matches),
-        "selected_operator_conn_id": (
-            selected_operator.conn_id if selected_operator else None
-        ),
-        "duration_seconds": (
-            selected_operator.conversation_seconds if selected_operator else None
-        ),
-        "answer_delay_seconds": (
-            selected_operator.answer_delay_seconds if selected_operator else None
-        ),
+        "selected_operator_conn_id": selected_operator.conn_id if selected_operator else None,
+        "duration_seconds": selected_operator.conversation_seconds if selected_operator else None,
+        "answer_delay_seconds": selected_operator.answer_delay_seconds if selected_operator else None,
         "selection_reason": selection_reason,
         "operator_duration_confirmed": bool(
             selected_operator
             and selected_operator.conversation_seconds is not None
             and selected_operator.conversation_seconds > 0
         ),
+    }
+
+
+def _empty_result(caller_call_ref: str, operator_call_ref: str, reason: str) -> dict[str, object]:
+    return {
+        "caller_call_ref": caller_call_ref,
+        "operator_call_ref": operator_call_ref,
+        "caller_record_count": 0,
+        "operator_record_count": 0,
+        "matched_record_count": 0,
+        "selected_operator_conn_id": None,
+        "duration_seconds": None,
+        "answer_delay_seconds": None,
+        "selection_reason": reason,
+        "operator_duration_confirmed": False,
     }
 
 
