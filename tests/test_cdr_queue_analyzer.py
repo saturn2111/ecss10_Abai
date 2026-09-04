@@ -32,6 +32,9 @@ class CdrQueueAnalyzerTests(unittest.TestCase):
             path.unlink(missing_ok=True)
         self.assertEqual(result["duration_seconds"], 38)
         self.assertEqual(result["selection_reason"], "single_positive_t_ecd_operator_record")
+        self.assertTrue(result["caller_ref_matched"])
+        self.assertTrue(result["operator_ref_matched"])
+        self.assertTrue(result["both_refs_matched"])
         self.assertTrue(result["operator_duration_confirmed"])
 
     def test_multiple_positive_operator_records_are_ambiguous(self) -> None:
@@ -62,7 +65,21 @@ class CdrQueueAnalyzerTests(unittest.TestCase):
             path.unlink(missing_ok=True)
         self.assertIsNone(result["duration_seconds"])
         self.assertEqual(result["selection_reason"], "no_operator_record")
+        self.assertTrue(result["caller_ref_matched"])
+        self.assertFalse(result["operator_ref_matched"])
+        self.assertFalse(result["both_refs_matched"])
         self.assertFalse(result["operator_duration_confirmed"])
+
+    def test_operator_only_match_is_reported_without_inventing_caller_evidence(self) -> None:
+        path = self._write("CONN_ID,T_ECD,T_DBA\noperator-ref,12,3\n")
+        try:
+            result = analyze_queue_call(load_cdr(path), caller_call_ref="caller-ref", operator_call_ref="operator-ref")
+        finally:
+            path.unlink(missing_ok=True)
+        self.assertFalse(result["caller_ref_matched"])
+        self.assertTrue(result["operator_ref_matched"])
+        self.assertFalse(result["both_refs_matched"])
+        self.assertEqual(result["duration_seconds"], 12)
 
     def test_same_call_ref_is_rejected_as_ambiguous(self) -> None:
         path = self._write("CONN_ID,T_ECD,T_DBA\nsame-ref,51,4\n")
@@ -71,12 +88,14 @@ class CdrQueueAnalyzerTests(unittest.TestCase):
         finally:
             path.unlink(missing_ok=True)
         self.assertEqual(result["selection_reason"], "ambiguous_same_call_ref")
+        self.assertFalse(result["both_refs_matched"])
         self.assertIsNone(result["duration_seconds"])
         self.assertFalse(result["operator_duration_confirmed"])
 
     def test_blank_call_ref_is_rejected(self) -> None:
         result = analyze_queue_call((), caller_call_ref=" ", operator_call_ref="operator-ref")
         self.assertEqual(result["selection_reason"], "missing_call_ref")
+        self.assertFalse(result["both_refs_matched"])
         self.assertFalse(result["operator_duration_confirmed"])
 
     def test_missing_required_column_fails_closed(self) -> None:

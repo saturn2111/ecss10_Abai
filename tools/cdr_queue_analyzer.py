@@ -128,12 +128,18 @@ def analyze_queue_call(
     elif len(operator_records) > 1:
         selection_reason = "ambiguous_multiple_operator_records"
 
+    caller_ref_matched = bool(caller_records)
+    operator_ref_matched = bool(operator_records)
+
     return {
         "caller_call_ref": caller_call_ref,
         "operator_call_ref": operator_call_ref,
         "caller_record_count": len(caller_records),
         "operator_record_count": len(operator_records),
         "matched_record_count": len(matches),
+        "caller_ref_matched": caller_ref_matched,
+        "operator_ref_matched": operator_ref_matched,
+        "both_refs_matched": caller_ref_matched and operator_ref_matched,
         "selected_operator_conn_id": selected_operator.conn_id if selected_operator else None,
         "duration_seconds": selected_operator.conversation_seconds if selected_operator else None,
         "answer_delay_seconds": selected_operator.answer_delay_seconds if selected_operator else None,
@@ -153,6 +159,9 @@ def _empty_result(caller_call_ref: str, operator_call_ref: str, reason: str) -> 
         "caller_record_count": 0,
         "operator_record_count": 0,
         "matched_record_count": 0,
+        "caller_ref_matched": False,
+        "operator_ref_matched": False,
+        "both_refs_matched": False,
         "selected_operator_conn_id": None,
         "duration_seconds": None,
         "answer_delay_seconds": None,
