@@ -48,6 +48,14 @@ def load_cdr(path: str | Path) -> list[CdrRecord]:
     if missing:
         raise ValueError(f"CDR is missing required columns: {', '.join(missing)}")
 
+    duplicate_required = [
+        name for name in REQUIRED_COLUMNS if fieldnames.count(name) > 1
+    ]
+    if duplicate_required:
+        raise ValueError(
+            "CDR has duplicate required columns: " + ", ".join(duplicate_required)
+        )
+
     for raw_row in reader:
         normalized = {
             (key or "").strip(): (value or "").strip()
