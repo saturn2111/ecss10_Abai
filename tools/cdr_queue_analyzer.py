@@ -120,8 +120,11 @@ def analyze_queue_call(
     elif len(operator_positive) > 1:
         selection_reason = "ambiguous_multiple_positive_operator_records"
     elif len(operator_records) == 1:
-        selected_operator = operator_records[0]
-        selection_reason = "single_operator_record"
+        if operator_records[0].conversation_seconds is None:
+            selection_reason = "invalid_operator_t_ecd"
+        else:
+            selected_operator = operator_records[0]
+            selection_reason = "single_operator_record"
     elif len(operator_records) > 1:
         selection_reason = "ambiguous_multiple_operator_records"
 
