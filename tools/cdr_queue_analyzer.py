@@ -24,9 +24,10 @@ def _to_int(value: str | None) -> int | None:
     if not text:
         return None
     try:
-        return int(float(text.replace(",", ".")))
+        parsed = int(float(text.replace(",", ".")))
     except ValueError:
         return None
+    return parsed if parsed >= 0 else None
 
 
 def _detect_dialect(sample: str) -> csv.Dialect:
@@ -117,9 +118,6 @@ def analyze_queue_call(
         selected_operator = operator_positive[0]
         selection_reason = "single_positive_t_ecd_operator_record"
     elif len(operator_positive) > 1:
-        # Multiple positive rows for the same operator call_ref are ambiguous.
-        # Do not guess by selecting the largest T_ECD; the actual live CDR must
-        # establish the semantics before Duration can be considered confirmed.
         selection_reason = "ambiguous_multiple_positive_operator_records"
     elif len(operator_records) == 1:
         selected_operator = operator_records[0]
