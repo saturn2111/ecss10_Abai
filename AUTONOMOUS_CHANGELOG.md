@@ -15,3 +15,11 @@
 - Duration is confirmed only when the captured operator ref maps unambiguously to one positive operator record.
 - Added synthetic regression coverage for both multiple-record ambiguity cases.
 - No ECSS production change was made and no new live 112/CDR conclusion is asserted without the real CDR file.
+
+## 2026-09-04 — Duplicate required CDR column guard
+
+- Hardened the offline CSV loader against duplicate `CONN_ID`, `T_ECD`, or `T_DBA` header names, which `csv.DictReader` could otherwise collapse into one ambiguous value.
+- A duplicate required column now raises a deterministic `ValueError` before any queue-call correlation is attempted.
+- Added a synthetic regression test using duplicated `T_ECD` and preserved the existing missing-column and call-ref ambiguity coverage.
+- This is offline tooling only: no ECSS production configuration, queue, route, agent, license, VRRP, Mnesia, or phone state was changed.
+- No new conclusion about the real 112 call duration is asserted; the real captured CDR remains required for final mapping.
