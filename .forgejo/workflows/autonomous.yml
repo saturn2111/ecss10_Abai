@@ -64,6 +64,11 @@ jobs:
 
           cat .ci-feedback/validation.log
 
+      - name: Test CDR queue analyzer
+        run: |
+          python -m compileall -q tools tests
+          python -m unittest discover -s tests -p "test_*.py" -v             2>&1 | tee .ci-feedback/cdr-tests.log
+
       - name: Auto-merge green AI branch
         if: ${{ success() }}
         run: |
