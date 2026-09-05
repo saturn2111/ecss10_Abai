@@ -230,6 +230,11 @@ def analyze_queue_call(
     operator_ref_matched = bool(operator_records)
     caller_ref_unique = len(caller_records) == 1
     operator_ref_unique = len(operator_records) == 1
+    selected_operator_has_complete_timing = bool(
+        selected_operator
+        and selected_operator.conversation_seconds is not None
+        and selected_operator.answer_delay_seconds is not None
+    )
 
     return {
         "caller_call_ref": caller_call_ref,
@@ -266,6 +271,7 @@ def analyze_queue_call(
             len(caller_records), len(operator_records)
         ),
         "selected_operator_conn_id": selected_operator.conn_id if selected_operator else None,
+        "selected_operator_has_complete_timing": selected_operator_has_complete_timing,
         "duration_seconds": selected_operator.conversation_seconds if selected_operator else None,
         "answer_delay_seconds": selected_operator.answer_delay_seconds if selected_operator else None,
         "selection_reason": selection_reason,
@@ -303,6 +309,7 @@ def _empty_result(caller_call_ref: str, operator_call_ref: str, reason: str) -> 
         "operator_timing_evidence": "not_evaluated",
         "correlation_evidence": "not_evaluated",
         "selected_operator_conn_id": None,
+        "selected_operator_has_complete_timing": False,
         "duration_seconds": None,
         "answer_delay_seconds": None,
         "selection_reason": reason,
