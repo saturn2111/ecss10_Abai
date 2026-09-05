@@ -123,6 +123,12 @@ def analyze_queue_call(
     operator_positive = [
         item for item in operator_records if (item.conversation_seconds or 0) > 0
     ]
+    operator_zero = [
+        item for item in operator_records if item.conversation_seconds == 0
+    ]
+    operator_invalid = [
+        item for item in operator_records if item.conversation_seconds is None
+    ]
 
     selected_operator: CdrRecord | None = None
     selection_reason = "no_operator_record"
@@ -157,6 +163,9 @@ def analyze_queue_call(
         "caller_ref_unique": caller_ref_unique,
         "operator_ref_unique": operator_ref_unique,
         "both_refs_unique": caller_ref_unique and operator_ref_unique,
+        "operator_positive_duration_record_count": len(operator_positive),
+        "operator_zero_duration_record_count": len(operator_zero),
+        "operator_invalid_duration_record_count": len(operator_invalid),
         "correlation_evidence": correlation_evidence(
             len(caller_records), len(operator_records)
         ),
@@ -185,6 +194,9 @@ def _empty_result(caller_call_ref: str, operator_call_ref: str, reason: str) -> 
         "caller_ref_unique": False,
         "operator_ref_unique": False,
         "both_refs_unique": False,
+        "operator_positive_duration_record_count": 0,
+        "operator_zero_duration_record_count": 0,
+        "operator_invalid_duration_record_count": 0,
         "correlation_evidence": "not_evaluated",
         "selected_operator_conn_id": None,
         "duration_seconds": None,
