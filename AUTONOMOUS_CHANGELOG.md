@@ -1,5 +1,12 @@
 # Autonomous development changelog
 
+## 2026-09-06 — Selected operator timing evidence scope r20
+
+- Added `docs/CDR_SELECTED_TIMING_EVIDENCE.md` to pin the exact scope of the current offline timing helpers around an already-selected operator CDR record.
+- Explicitly documented that numeric zero is present evidence, while absent `T_ECD` / `T_DBA` remains missing and cannot be silently promoted to queue-wait or final-duration conclusions.
+- Re-stated the non-claims that remain blocked on the real 112 queue CDR: record multiplicity, authoritative finished duration, queue-wait semantics, whole-call `CONN_ID` identity, and final record URL mapping.
+- No ECSS production configuration, route, agents, licensing, VRRP, Mnesia or live phone state was changed.
+
 ## 2026-09-05 — Selected operator timing state evidence
 
 - Added deterministic `selected_operator_timing_state(...)` for the exact operator CDR record already selected by the existing fail-closed `T_ECD` rules.
