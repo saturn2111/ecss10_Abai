@@ -117,6 +117,27 @@ def operator_duration_evidence(
     return "mixed_or_ambiguous_duration_records"
 
 
+def operator_answer_delay_evidence(
+    positive_count: int,
+    zero_count: int,
+    invalid_count: int,
+) -> str:
+    """Describe exact operator-side T_DBA evidence without inferring queue timing."""
+
+    total = positive_count + zero_count + invalid_count
+    if total == 0:
+        return "no_operator_answer_delay_evidence"
+    if positive_count == 1 and zero_count == 0 and invalid_count == 0:
+        return "single_positive_answer_delay_record"
+    if positive_count > 1:
+        return "multiple_positive_answer_delay_records"
+    if positive_count == 0 and zero_count == 1 and invalid_count == 0:
+        return "single_zero_answer_delay_record"
+    if positive_count == 0 and zero_count == 0 and invalid_count == 1:
+        return "single_invalid_answer_delay_record"
+    return "mixed_or_ambiguous_answer_delay_records"
+
+
 def analyze_queue_call(
     records: Iterable[CdrRecord],
     *,
@@ -149,6 +170,15 @@ def analyze_queue_call(
     ]
     operator_invalid = [
         item for item in operator_records if item.conversation_seconds is None
+    ]
+    operator_answer_delay_positive = [
+        item for item in operator_records if (item.answer_delay_seconds or 0) > 0
+    ]
+    operator_answer_delay_zero = [
+        item for item in operator_records if item.answer_delay_seconds == 0
+    ]
+    operator_answer_delay_invalid = [
+        item for item in operator_records if item.answer_delay_seconds is None
     ]
 
     selected_operator: CdrRecord | None = None
@@ -190,6 +220,14 @@ def analyze_queue_call(
         "operator_duration_evidence": operator_duration_evidence(
             len(operator_positive), len(operator_zero), len(operator_invalid)
         ),
+        "operator_positive_answer_delay_record_count": len(operator_answer_delay_positive),
+        "operator_zero_answer_delay_record_count": len(operator_answer_delay_zero),
+        "operator_invalid_answer_delay_record_count": len(operator_answer_delay_invalid),
+        "operator_answer_delay_evidence": operator_answer_delay_evidence(
+            len(operator_answer_delay_positive),
+            len(operator_answer_delay_zero),
+            len(operator_answer_delay_invalid),
+        ),
         "correlation_evidence": correlation_evidence(
             len(caller_records), len(operator_records)
         ),
@@ -222,6 +260,10 @@ def _empty_result(caller_call_ref: str, operator_call_ref: str, reason: str) -> 
         "operator_zero_duration_record_count": 0,
         "operator_invalid_duration_record_count": 0,
         "operator_duration_evidence": "not_evaluated",
+        "operator_positive_answer_delay_record_count": 0,
+        "operator_zero_answer_delay_record_count": 0,
+        "operator_invalid_answer_delay_record_count": 0,
+        "operator_answer_delay_evidence": "not_evaluated",
         "correlation_evidence": "not_evaluated",
         "selected_operator_conn_id": None,
         "duration_seconds": None,
