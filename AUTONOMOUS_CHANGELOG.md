@@ -1,5 +1,14 @@
 # Autonomous development changelog
 
+## 2026-09-05 — Same-record operator timing evidence
+
+- Added deterministic `operator_timing_evidence(...)` for exact operator-side records that carry both parsed `T_ECD` and `T_DBA` on the same CDR row.
+- The analyzer now reports `operator_complete_timing_record_count` and `operator_incomplete_timing_record_count`, derived only from records with `CONN_ID == operator_call_ref`.
+- Evidence states distinguish one/multiple complete timing rows, one/multiple incomplete-only rows, mixed complete/incomplete rows, and no evidence; invalid ref pairs remain `not_evaluated`.
+- These fields do not select a new duration source, infer a shared logical call id, infer queue membership, or claim that `T_DBA` represents queue wait time. Existing fail-closed `T_ECD` selection is unchanged.
+- Added synthetic regression coverage for same-record complete/incomplete timing and every deterministic timing-evidence state.
+- No ECSS production configuration or live 112 state was changed. The real captured queue CDR remains required for final live mapping.
+
 ## 2026-09-05 — Operator answer-delay evidence classification
 
 - Added deterministic `operator_answer_delay_evidence(...)` classification for exact operator-side `T_DBA` evidence in the offline queue-call analyzer.

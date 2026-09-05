@@ -138,6 +138,23 @@ def operator_answer_delay_evidence(
     return "mixed_or_ambiguous_answer_delay_records"
 
 
+def operator_timing_evidence(complete_count: int, incomplete_count: int) -> str:
+    """Describe whether exact operator records carry both parsed timing metrics."""
+
+    total = complete_count + incomplete_count
+    if total == 0:
+        return "no_operator_timing_evidence"
+    if complete_count == 1 and incomplete_count == 0:
+        return "single_complete_timing_record"
+    if complete_count > 1:
+        return "multiple_complete_timing_records"
+    if complete_count == 0 and incomplete_count == 1:
+        return "single_incomplete_timing_record"
+    if complete_count == 0:
+        return "no_complete_timing_records"
+    return "mixed_complete_and_incomplete_timing_records"
+
+
 def analyze_queue_call(
     records: Iterable[CdrRecord],
     *,
@@ -179,6 +196,18 @@ def analyze_queue_call(
     ]
     operator_answer_delay_invalid = [
         item for item in operator_records if item.answer_delay_seconds is None
+    ]
+    operator_complete_timing = [
+        item
+        for item in operator_records
+        if item.conversation_seconds is not None
+        and item.answer_delay_seconds is not None
+    ]
+    operator_incomplete_timing = [
+        item
+        for item in operator_records
+        if item.conversation_seconds is None
+        or item.answer_delay_seconds is None
     ]
 
     selected_operator: CdrRecord | None = None
@@ -228,6 +257,11 @@ def analyze_queue_call(
             len(operator_answer_delay_zero),
             len(operator_answer_delay_invalid),
         ),
+        "operator_complete_timing_record_count": len(operator_complete_timing),
+        "operator_incomplete_timing_record_count": len(operator_incomplete_timing),
+        "operator_timing_evidence": operator_timing_evidence(
+            len(operator_complete_timing), len(operator_incomplete_timing)
+        ),
         "correlation_evidence": correlation_evidence(
             len(caller_records), len(operator_records)
         ),
@@ -264,6 +298,9 @@ def _empty_result(caller_call_ref: str, operator_call_ref: str, reason: str) -> 
         "operator_zero_answer_delay_record_count": 0,
         "operator_invalid_answer_delay_record_count": 0,
         "operator_answer_delay_evidence": "not_evaluated",
+        "operator_complete_timing_record_count": 0,
+        "operator_incomplete_timing_record_count": 0,
+        "operator_timing_evidence": "not_evaluated",
         "correlation_evidence": "not_evaluated",
         "selected_operator_conn_id": None,
         "duration_seconds": None,
