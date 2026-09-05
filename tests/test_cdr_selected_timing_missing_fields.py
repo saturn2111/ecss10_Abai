@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from tools.cdr_queue_analyzer import CdrRecord
-from tools.cdr_selected_timing_evidence import selected_operator_missing_timing_fields
+from tools.cdr_selected_timing_evidence import (
+    selected_operator_missing_timing_fields,
+    selected_operator_timing_is_complete,
+)
 
 
 def _record(duration: int | None, delay: int | None) -> CdrRecord:
@@ -23,3 +26,12 @@ def test_selected_operator_missing_timing_fields_are_deterministic() -> None:
 
 def test_zero_timing_values_are_present_not_missing() -> None:
     assert selected_operator_missing_timing_fields(_record(0, 0)) == ()
+
+
+def test_selected_operator_timing_complete_requires_selected_row_and_both_fields() -> None:
+    assert selected_operator_timing_is_complete(None) is False
+    assert selected_operator_timing_is_complete(_record(12, 3)) is True
+    assert selected_operator_timing_is_complete(_record(0, 0)) is True
+    assert selected_operator_timing_is_complete(_record(None, 3)) is False
+    assert selected_operator_timing_is_complete(_record(12, None)) is False
+    assert selected_operator_timing_is_complete(_record(None, None)) is False
