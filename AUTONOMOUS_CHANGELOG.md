@@ -1,5 +1,13 @@
 # Autonomous development changelog
 
+## 2026-09-05 — Selected operator timing completeness evidence
+
+- Added `selected_operator_has_complete_timing` for the exact operator record already chosen by the existing fail-closed `T_ECD` selection rules.
+- The flag is true only when that selected exact `CONN_ID == operator_call_ref` record contains both parsed `T_ECD` and parsed `T_DBA`; missing timing data or ambiguous/no selection fails closed to false.
+- The field does not select a new duration source, infer a shared logical call id, infer queue membership, identify an operator beyond the supplied exact ref, or claim that `T_DBA` is queue wait time.
+- Added synthetic regression coverage for complete, incomplete, ambiguous, partial-ref, and invalid same-ref states.
+- No ECSS production configuration or live 112 state was changed. The real captured queue CDR remains required for final live mapping.
+
 ## 2026-09-05 — Same-record operator timing evidence
 
 - Added deterministic `operator_timing_evidence(...)` for exact operator-side records that carry both parsed `T_ECD` and `T_DBA` on the same CDR row.
