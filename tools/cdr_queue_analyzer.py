@@ -155,6 +155,22 @@ def operator_timing_evidence(complete_count: int, incomplete_count: int) -> str:
     return "mixed_complete_and_incomplete_timing_records"
 
 
+def selected_operator_timing_state(record: CdrRecord | None) -> str:
+    """Describe parsed timing fields on the already-selected exact operator record."""
+
+    if record is None:
+        return "no_selected_operator_record"
+    has_duration = record.conversation_seconds is not None
+    has_answer_delay = record.answer_delay_seconds is not None
+    if has_duration and has_answer_delay:
+        return "complete_timing"
+    if has_duration:
+        return "missing_answer_delay"
+    if has_answer_delay:
+        return "missing_duration"
+    return "missing_duration_and_answer_delay"
+
+
 def analyze_queue_call(
     records: Iterable[CdrRecord],
     *,
@@ -272,6 +288,7 @@ def analyze_queue_call(
         ),
         "selected_operator_conn_id": selected_operator.conn_id if selected_operator else None,
         "selected_operator_has_complete_timing": selected_operator_has_complete_timing,
+        "selected_operator_timing_state": selected_operator_timing_state(selected_operator),
         "duration_seconds": selected_operator.conversation_seconds if selected_operator else None,
         "answer_delay_seconds": selected_operator.answer_delay_seconds if selected_operator else None,
         "selection_reason": selection_reason,
@@ -310,6 +327,7 @@ def _empty_result(caller_call_ref: str, operator_call_ref: str, reason: str) -> 
         "correlation_evidence": "not_evaluated",
         "selected_operator_conn_id": None,
         "selected_operator_has_complete_timing": False,
+        "selected_operator_timing_state": "not_evaluated",
         "duration_seconds": None,
         "answer_delay_seconds": None,
         "selection_reason": reason,
