@@ -142,6 +142,8 @@ def analyze_queue_call(
 
     caller_ref_matched = bool(caller_records)
     operator_ref_matched = bool(operator_records)
+    caller_ref_unique = len(caller_records) == 1
+    operator_ref_unique = len(operator_records) == 1
 
     return {
         "caller_call_ref": caller_call_ref,
@@ -152,6 +154,9 @@ def analyze_queue_call(
         "caller_ref_matched": caller_ref_matched,
         "operator_ref_matched": operator_ref_matched,
         "both_refs_matched": caller_ref_matched and operator_ref_matched,
+        "caller_ref_unique": caller_ref_unique,
+        "operator_ref_unique": operator_ref_unique,
+        "both_refs_unique": caller_ref_unique and operator_ref_unique,
         "correlation_evidence": correlation_evidence(
             len(caller_records), len(operator_records)
         ),
@@ -177,6 +182,9 @@ def _empty_result(caller_call_ref: str, operator_call_ref: str, reason: str) -> 
         "caller_ref_matched": False,
         "operator_ref_matched": False,
         "both_refs_matched": False,
+        "caller_ref_unique": False,
+        "operator_ref_unique": False,
+        "both_refs_unique": False,
         "correlation_evidence": "not_evaluated",
         "selected_operator_conn_id": None,
         "duration_seconds": None,

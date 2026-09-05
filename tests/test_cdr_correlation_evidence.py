@@ -20,6 +20,9 @@ def test_exact_unique_refs_report_unique_evidence() -> None:
     )
 
     assert result["correlation_evidence"] == "both_refs_unique"
+    assert result["caller_ref_unique"] is True
+    assert result["operator_ref_unique"] is True
+    assert result["both_refs_unique"] is True
 
 
 def test_duplicate_exact_ref_records_are_not_reported_as_unique() -> None:
@@ -30,6 +33,9 @@ def test_duplicate_exact_ref_records_are_not_reported_as_unique() -> None:
     )
 
     assert result["correlation_evidence"] == "both_refs_present_with_duplicates"
+    assert result["caller_ref_unique"] is False
+    assert result["operator_ref_unique"] is True
+    assert result["both_refs_unique"] is False
 
 
 def test_partial_match_is_explicit() -> None:
@@ -40,6 +46,9 @@ def test_partial_match_is_explicit() -> None:
     )
 
     assert result["correlation_evidence"] == "partial_ref_match"
+    assert result["caller_ref_unique"] is True
+    assert result["operator_ref_unique"] is False
+    assert result["both_refs_unique"] is False
 
 
 def test_invalid_ref_pair_is_not_evaluated() -> None:
@@ -50,6 +59,9 @@ def test_invalid_ref_pair_is_not_evaluated() -> None:
     )
 
     assert result["correlation_evidence"] == "not_evaluated"
+    assert result["caller_ref_unique"] is False
+    assert result["operator_ref_unique"] is False
+    assert result["both_refs_unique"] is False
 
 
 def test_evidence_helper_reports_no_match() -> None:
