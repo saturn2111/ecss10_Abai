@@ -1,5 +1,13 @@
 # Autonomous development changelog
 
+## 2026-09-05 — Operator duration evidence counts
+
+- Added explicit `operator_positive_duration_record_count`, `operator_zero_duration_record_count`, and `operator_invalid_duration_record_count` fields to the offline queue-call analyzer.
+- Counts are derived only from exact operator `CONN_ID == operator_call_ref` records and classify parsed `T_ECD` as positive, zero, or unavailable/invalid.
+- The new fields are descriptive evidence only: they do not infer a logical call id, queue membership, operator identity, or choose a duration beyond the existing fail-closed selection rules.
+- Added synthetic regression coverage for mixed positive/zero/invalid operator records plus partial/invalid ref cases.
+- No ECSS production configuration or live 112 state was changed. The real captured queue CDR is still required for final live mapping.
+
 ## 2026-09-05 — Exact-ref uniqueness flags
 
 - Added explicit `caller_ref_unique`, `operator_ref_unique`, and `both_refs_unique` fields to the offline queue-call analyzer.
