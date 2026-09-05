@@ -96,6 +96,27 @@ def correlation_evidence(caller_record_count: int, operator_record_count: int) -
     return "no_ref_match"
 
 
+def operator_duration_evidence(
+    positive_count: int,
+    zero_count: int,
+    invalid_count: int,
+) -> str:
+    """Describe operator-side T_ECD evidence without selecting or inferring a record."""
+
+    total = positive_count + zero_count + invalid_count
+    if total == 0:
+        return "no_operator_duration_evidence"
+    if positive_count == 1 and zero_count == 0 and invalid_count == 0:
+        return "single_positive_duration_record"
+    if positive_count > 1:
+        return "multiple_positive_duration_records"
+    if positive_count == 0 and zero_count == 1 and invalid_count == 0:
+        return "single_zero_duration_record"
+    if positive_count == 0 and zero_count == 0 and invalid_count == 1:
+        return "single_invalid_duration_record"
+    return "mixed_or_ambiguous_duration_records"
+
+
 def analyze_queue_call(
     records: Iterable[CdrRecord],
     *,
@@ -166,6 +187,9 @@ def analyze_queue_call(
         "operator_positive_duration_record_count": len(operator_positive),
         "operator_zero_duration_record_count": len(operator_zero),
         "operator_invalid_duration_record_count": len(operator_invalid),
+        "operator_duration_evidence": operator_duration_evidence(
+            len(operator_positive), len(operator_zero), len(operator_invalid)
+        ),
         "correlation_evidence": correlation_evidence(
             len(caller_records), len(operator_records)
         ),
@@ -197,6 +221,7 @@ def _empty_result(caller_call_ref: str, operator_call_ref: str, reason: str) -> 
         "operator_positive_duration_record_count": 0,
         "operator_zero_duration_record_count": 0,
         "operator_invalid_duration_record_count": 0,
+        "operator_duration_evidence": "not_evaluated",
         "correlation_evidence": "not_evaluated",
         "selected_operator_conn_id": None,
         "duration_seconds": None,
