@@ -1,5 +1,13 @@
 # Autonomous development changelog
 
+## 2026-09-05 — Operator duration evidence classification
+
+- Added deterministic `operator_duration_evidence(...)` classification to the offline queue-call analyzer.
+- Evidence states distinguish no operator duration evidence, one positive record, multiple positive records, one zero record, one invalid record, and mixed/ambiguous records.
+- The classifier uses only exact operator `CONN_ID == operator_call_ref` record counts already exposed by the analyzer; it does not infer queue membership, logical call identity, operator identity, or choose a duration beyond existing fail-closed rules.
+- Added synthetic regression coverage for every classification state and for invalid same-ref input (`not_evaluated`).
+- No ECSS production configuration or live 112 state was changed. The real captured queue CDR remains required for final live mapping.
+
 ## 2026-09-05 — Operator duration evidence counts
 
 - Added explicit `operator_positive_duration_record_count`, `operator_zero_duration_record_count`, and `operator_invalid_duration_record_count` fields to the offline queue-call analyzer.
