@@ -1,5 +1,14 @@
 # Autonomous development changelog
 
+## 2026-09-05 — Operator answer-delay evidence classification
+
+- Added deterministic `operator_answer_delay_evidence(...)` classification for exact operator-side `T_DBA` evidence in the offline queue-call analyzer.
+- The analyzer now reports positive/zero/invalid operator answer-delay record counts alongside the existing duration evidence, using only exact `CONN_ID == operator_call_ref` matches.
+- Evidence states distinguish no answer-delay evidence, one positive record, multiple positive records, one zero record, one invalid record, and mixed/ambiguous records; invalid same-ref input remains `not_evaluated`.
+- This does not infer queue timing, logical call identity, operator identity, or alter the existing fail-closed `T_ECD` duration-selection rules.
+- Added synthetic regression coverage for mixed evidence and every deterministic answer-delay classification state.
+- No ECSS production configuration or live 112 state was changed. The real captured queue CDR remains required for final live mapping.
+
 ## 2026-09-05 — Operator duration evidence classification
 
 - Added deterministic `operator_duration_evidence(...)` classification to the offline queue-call analyzer.
