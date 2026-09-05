@@ -1,0 +1,6 @@
+status=success
+sha=10b7e3886cd989f6ee78198cfe079350d0633aa6
+ref=refs/heads/ai/cdr-selected-timing-evidence-r15
+run_id=217
+run_number=25
+repository=darth_vader/ecss10_Abai

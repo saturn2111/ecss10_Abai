@@ -1,0 +1,20 @@
+test_infinite_answer_delay_is_not_exposed (test_cdr_negative_metrics.NegativeCdrMetricTests.test_infinite_answer_delay_is_not_exposed) ... ok
+test_infinite_duration_fails_closed_without_parser_crash (test_cdr_negative_metrics.NegativeCdrMetricTests.test_infinite_duration_fails_closed_without_parser_crash) ... ok
+test_malformed_duration_is_not_selected (test_cdr_negative_metrics.NegativeCdrMetricTests.test_malformed_duration_is_not_selected) ... ok
+test_negative_answer_delay_is_not_exposed (test_cdr_negative_metrics.NegativeCdrMetricTests.test_negative_answer_delay_is_not_exposed) ... ok
+test_negative_duration_is_not_confirmed (test_cdr_negative_metrics.NegativeCdrMetricTests.test_negative_duration_is_not_confirmed) ... ok
+test_blank_call_ref_is_rejected (test_cdr_queue_analyzer.CdrQueueAnalyzerTests.test_blank_call_ref_is_rejected) ... ok
+test_does_not_guess_when_operator_ref_is_missing (test_cdr_queue_analyzer.CdrQueueAnalyzerTests.test_does_not_guess_when_operator_ref_is_missing) ... ok
+test_duplicate_required_column_fails_closed (test_cdr_queue_analyzer.CdrQueueAnalyzerTests.test_duplicate_required_column_fails_closed) ... ok
+test_loads_semicolon_cdr_and_preserves_required_metrics (test_cdr_queue_analyzer.CdrQueueAnalyzerTests.test_loads_semicolon_cdr_and_preserves_required_metrics) ... ok
+test_missing_required_column_fails_closed (test_cdr_queue_analyzer.CdrQueueAnalyzerTests.test_missing_required_column_fails_closed) ... ok
+test_multiple_positive_operator_records_are_ambiguous (test_cdr_queue_analyzer.CdrQueueAnalyzerTests.test_multiple_positive_operator_records_are_ambiguous) ... ok
+test_multiple_zero_operator_records_are_ambiguous (test_cdr_queue_analyzer.CdrQueueAnalyzerTests.test_multiple_zero_operator_records_are_ambiguous) ... ok
+test_operator_only_match_is_reported_without_inventing_caller_evidence (test_cdr_queue_analyzer.CdrQueueAnalyzerTests.test_operator_only_match_is_reported_without_inventing_caller_evidence) ... ok
+test_same_call_ref_is_rejected_as_ambiguous (test_cdr_queue_analyzer.CdrQueueAnalyzerTests.test_same_call_ref_is_rejected_as_ambiguous) ... ok
+test_selects_single_positive_operator_record_for_duration (test_cdr_queue_analyzer.CdrQueueAnalyzerTests.test_selects_single_positive_operator_record_for_duration) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.007s
+
+OK
