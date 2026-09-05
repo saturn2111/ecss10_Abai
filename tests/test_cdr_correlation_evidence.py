@@ -23,6 +23,9 @@ def test_exact_unique_refs_report_unique_evidence() -> None:
     assert result["caller_ref_unique"] is True
     assert result["operator_ref_unique"] is True
     assert result["both_refs_unique"] is True
+    assert result["operator_positive_duration_record_count"] == 1
+    assert result["operator_zero_duration_record_count"] == 0
+    assert result["operator_invalid_duration_record_count"] == 0
 
 
 def test_duplicate_exact_ref_records_are_not_reported_as_unique() -> None:
@@ -38,6 +41,24 @@ def test_duplicate_exact_ref_records_are_not_reported_as_unique() -> None:
     assert result["both_refs_unique"] is False
 
 
+def test_operator_duration_evidence_counts_are_explicit() -> None:
+    result = analyze_queue_call(
+        [
+            record("caller", 0),
+            record("operator", 12),
+            record("operator", 0),
+            record("operator", None),
+        ],
+        caller_call_ref="caller",
+        operator_call_ref="operator",
+    )
+
+    assert result["operator_positive_duration_record_count"] == 1
+    assert result["operator_zero_duration_record_count"] == 1
+    assert result["operator_invalid_duration_record_count"] == 1
+    assert result["operator_record_count"] == 3
+
+
 def test_partial_match_is_explicit() -> None:
     result = analyze_queue_call(
         [record("caller", 0)],
@@ -49,6 +70,9 @@ def test_partial_match_is_explicit() -> None:
     assert result["caller_ref_unique"] is True
     assert result["operator_ref_unique"] is False
     assert result["both_refs_unique"] is False
+    assert result["operator_positive_duration_record_count"] == 0
+    assert result["operator_zero_duration_record_count"] == 0
+    assert result["operator_invalid_duration_record_count"] == 0
 
 
 def test_invalid_ref_pair_is_not_evaluated() -> None:
@@ -62,6 +86,9 @@ def test_invalid_ref_pair_is_not_evaluated() -> None:
     assert result["caller_ref_unique"] is False
     assert result["operator_ref_unique"] is False
     assert result["both_refs_unique"] is False
+    assert result["operator_positive_duration_record_count"] == 0
+    assert result["operator_zero_duration_record_count"] == 0
+    assert result["operator_invalid_duration_record_count"] == 0
 
 
 def test_evidence_helper_reports_no_match() -> None:
