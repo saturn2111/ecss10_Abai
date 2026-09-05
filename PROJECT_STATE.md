@@ -371,6 +371,7 @@ released без ранее подтверждённого operator answered
 - synthetic unit tests проверяют CSV с запятой/точкой с запятой, выбор operator `T_ECD` и отсутствие догадок при пропущенной записи;
 - analyzer отдельно классифицирует exact-ref correlation, uniqueness, operator `T_ECD` и `T_DBA` evidence; malformed/negative/non-finite метрики fail-closed;
 - добавлена same-record timing evidence: отдельно считаются operator records, где на одной строке одновременно распарсены `T_ECD` и `T_DBA`, без выбора нового duration source и без трактовки `T_DBA` как queue wait time;
+- добавлен `selected_operator_has_complete_timing`: он описывает только уже выбранную exact operator record и равен true лишь когда на ней одновременно распарсены `T_ECD` и `T_DBA`; при ambiguous/no selection или неполных timing данных fail-closed возвращается false;
 - никаких новых выводов о реальном queue-call без фактического CDR не зафиксировано.
 
 1. **Сейчас:** дождаться/получить `cdr_dp_abai_default_20260903_17_00_00_p.csv`, который должен содержать live queue-вызов `1001 -> 112 -> Operator2` 16:21–16:22.
