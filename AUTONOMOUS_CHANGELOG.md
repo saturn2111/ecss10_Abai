@@ -1,5 +1,14 @@
 # Autonomous development changelog
 
+## 2026-09-05 — Exact-ref uniqueness flags
+
+- Added explicit `caller_ref_unique`, `operator_ref_unique`, and `both_refs_unique` fields to the offline queue-call analyzer.
+- Each flag is derived only from exact `CONN_ID == call_ref` record counts; one exact record is unique, zero or multiple records are not.
+- Invalid/missing/same-ref input fails closed with all uniqueness flags false.
+- Existing duration-selection logic and descriptive `correlation_evidence` semantics are unchanged; the new booleans expose evidence without inferring queue membership or a logical call relationship.
+- Added synthetic regression tests for unique, duplicate, partial, and invalid-ref cases.
+- No ECSS production configuration or live 112 state was changed. The real captured queue CDR is still required for final live mapping.
+
 ## 2026-09-05 — Exact-ref correlation evidence state
 
 - Added deterministic `correlation_evidence` to the offline queue-call analyzer, derived only from exact caller/operator `CONN_ID == call_ref` record counts.
