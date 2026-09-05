@@ -45,6 +45,26 @@ def test_exact_unique_refs_report_unique_evidence() -> None:
     assert result["operator_complete_timing_record_count"] == 1
     assert result["operator_incomplete_timing_record_count"] == 0
     assert result["operator_timing_evidence"] == "single_complete_timing_record"
+    assert result["selected_operator_has_complete_timing"] is True
+
+
+def test_selected_operator_timing_completeness_is_exact_selected_row_evidence() -> None:
+    incomplete = analyze_queue_call(
+        [record("caller", 0), record("operator", 12, None)],
+        caller_call_ref="caller",
+        operator_call_ref="operator",
+    )
+    ambiguous = analyze_queue_call(
+        [record("caller", 0), record("operator", 12, 3), record("operator", 7, 1)],
+        caller_call_ref="caller",
+        operator_call_ref="operator",
+    )
+
+    assert incomplete["selection_reason"] == "single_positive_t_ecd_operator_record"
+    assert incomplete["selected_operator_has_complete_timing"] is False
+    assert ambiguous["selection_reason"] == "ambiguous_multiple_positive_operator_records"
+    assert ambiguous["selected_operator_conn_id"] is None
+    assert ambiguous["selected_operator_has_complete_timing"] is False
 
 
 def test_duplicate_exact_ref_records_are_not_reported_as_unique() -> None:
@@ -163,6 +183,7 @@ def test_partial_match_is_explicit() -> None:
     assert result["operator_complete_timing_record_count"] == 0
     assert result["operator_incomplete_timing_record_count"] == 0
     assert result["operator_timing_evidence"] == "no_operator_timing_evidence"
+    assert result["selected_operator_has_complete_timing"] is False
 
 
 def test_invalid_ref_pair_is_not_evaluated() -> None:
@@ -187,6 +208,7 @@ def test_invalid_ref_pair_is_not_evaluated() -> None:
     assert result["operator_complete_timing_record_count"] == 0
     assert result["operator_incomplete_timing_record_count"] == 0
     assert result["operator_timing_evidence"] == "not_evaluated"
+    assert result["selected_operator_has_complete_timing"] is False
 
 
 def test_evidence_helper_reports_no_match() -> None:
