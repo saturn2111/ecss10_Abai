@@ -20,6 +20,24 @@ def test_selected_operator_timing_state_is_deterministic() -> None:
     assert selected_operator_timing_state(_record("op", None, None)) == "missing_duration_and_answer_delay"
 
 
+def test_zero_values_are_present_timing_evidence_not_missing_fields() -> None:
+    record = _record("operator", 0, 0)
+
+    assert selected_operator_timing_state(record) == "complete_timing"
+
+    result = analyze_queue_call(
+        (_record("caller", 0, 0), record),
+        caller_call_ref="caller",
+        operator_call_ref="operator",
+    )
+    assert result["selected_operator_conn_id"] == "operator"
+    assert result["selected_operator_timing_state"] == "complete_timing"
+    assert result["selected_operator_has_complete_timing"] is True
+    assert result["duration_seconds"] == 0
+    assert result["answer_delay_seconds"] == 0
+    assert result["operator_duration_confirmed"] is False
+
+
 def test_analyzer_reports_state_only_for_already_selected_exact_operator_record() -> None:
     result = analyze_queue_call(
         (_record("caller", 0, 0), _record("operator", 12, None)),
