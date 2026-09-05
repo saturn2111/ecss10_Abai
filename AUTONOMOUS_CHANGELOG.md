@@ -1,5 +1,13 @@
 # Autonomous development changelog
 
+## 2026-09-05 — Selected operator timing state evidence
+
+- Added deterministic `selected_operator_timing_state(...)` for the exact operator CDR record already selected by the existing fail-closed `T_ECD` rules.
+- The state distinguishes `complete_timing`, `missing_answer_delay`, `missing_duration`, `missing_duration_and_answer_delay`, and `no_selected_operator_record`; invalid ref pairs remain `not_evaluated` through `_empty_result(...)`.
+- This field does not select a different record, infer logical call identity, infer queue membership, identify an operator beyond the supplied exact `operator_call_ref`, or reinterpret `T_DBA` as queue wait time.
+- Added synthetic tests for every deterministic timing-completeness state and for ambiguous positive operator records, which still produce no selected record.
+- No ECSS production configuration or live 112 state was changed. The real captured queue CDR remains required for final live mapping.
+
 ## 2026-09-05 — Selected operator timing completeness evidence
 
 - Added `selected_operator_has_complete_timing` for the exact operator record already chosen by the existing fail-closed `T_ECD` selection rules.
