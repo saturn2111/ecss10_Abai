@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
 import json
 from pathlib import Path
 from typing import Iterable
@@ -24,10 +25,10 @@ def _to_int(value: str | None) -> int | None:
     if not text:
         return None
     try:
-        numeric = float(text.replace(",", "."))
-    except (ValueError, OverflowError):
+        numeric = Decimal(text.replace(",", "."))
+    except (InvalidOperation, ValueError):
         return None
-    if not numeric.is_integer() or numeric < 0:
+    if not numeric.is_finite() or numeric < 0 or numeric != numeric.to_integral_value():
         return None
     try:
         return int(numeric)
