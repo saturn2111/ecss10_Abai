@@ -24,10 +24,15 @@ def _to_int(value: str | None) -> int | None:
     if not text:
         return None
     try:
-        parsed = int(float(text.replace(",", ".")))
+        numeric = float(text.replace(",", "."))
     except (ValueError, OverflowError):
         return None
-    return parsed if parsed >= 0 else None
+    if not numeric.is_integer() or numeric < 0:
+        return None
+    try:
+        return int(numeric)
+    except (ValueError, OverflowError):
+        return None
 
 
 def _detect_dialect(sample: str) -> csv.Dialect:
