@@ -1,0 +1,6 @@
+status=success
+sha=3cafa0dc87045af8d52b60222bd6c15fd0be8d84
+ref=refs/heads/ai/cdr-caller-record-type-guard-r30
+run_id=435
+run_number=42
+repository=darth_vader/ecss10_Abai
