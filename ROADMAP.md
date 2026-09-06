@@ -15,7 +15,8 @@
 - [x] r27 exact caller-ref timing completeness evidence; Forgejo GREEN and auto-merged as `d7fb0a7b7fac682e6c2678cc1b51c32be9b87e20`.
 - [x] r28 surface raw T_ECD/T_DBA values only when exactly one complete caller-ref row exists and no competing incomplete row; Forgejo GREEN and auto-merged as `8738b32dafd3223d85e992bbe6cfa837d652c419`.
 - [x] r29 require exact string caller refs at the offline evidence boundary; Forgejo GREEN and auto-merged as `77ac711877bdb6786e213f976c9eab33716e3f14`.
-- [ ] r30 require exact `CdrRecord` values at the caller timing evidence boundary; awaiting Forgejo gate.
+- [x] r30 require exact `CdrRecord` values at the caller timing evidence boundary; Forgejo GREEN and auto-merged as `279c9acdef2345d08be411778c18f6ec8da01383`.
+- [ ] r31 reject surrounding whitespace on a nonblank exact caller ref instead of silently changing the supplied evidence identifier; awaiting Forgejo gate.
 - [ ] Validate queue-call CDR mapping against a real sanitized CDR captured from a confirmed live queue call.
 - [ ] Only after evidence, define which field/row maps to external `Duration` and whether any timing field has queue-wait semantics.
 

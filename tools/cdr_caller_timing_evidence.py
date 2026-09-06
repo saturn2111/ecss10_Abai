@@ -42,10 +42,10 @@ def summarize_caller_timing(
 
     if type(caller_call_ref) is not str:
         raise TypeError("caller_call_ref must be an exact string")
-    caller_call_ref = caller_call_ref.strip()
-    if not caller_call_ref:
+    stripped_ref = caller_call_ref.strip()
+    if not stripped_ref:
         return {
-            "caller_call_ref": caller_call_ref,
+            "caller_call_ref": stripped_ref,
             "caller_record_count": 0,
             "caller_complete_timing_record_count": 0,
             "caller_incomplete_timing_record_count": 0,
@@ -53,6 +53,8 @@ def summarize_caller_timing(
             "caller_t_ecd_seconds": None,
             "caller_t_dba_seconds": None,
         }
+    if caller_call_ref != stripped_ref:
+        raise ValueError("caller_call_ref must not contain surrounding whitespace")
 
     caller_records = tuple(records)
     if any(type(record) is not CdrRecord for record in caller_records):

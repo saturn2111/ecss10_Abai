@@ -42,7 +42,7 @@ class CallerTimingEvidenceTests(unittest.TestCase):
             CdrRecord("operator-b", 12, 2, {}),
         )
 
-        result = summarize_caller_timing(rows, caller_call_ref=" caller-a ")
+        result = summarize_caller_timing(rows, caller_call_ref="caller-a")
 
         self.assertEqual(result["caller_call_ref"], "caller-a")
         self.assertEqual(result["caller_record_count"], 2)
