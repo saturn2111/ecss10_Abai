@@ -1,4 +1,4 @@
-import pytest
+import unittest
 
 from tools.cdr_caller_timing_evidence import summarize_caller_timing
 from tools.cdr_queue_analyzer import CdrRecord
@@ -13,24 +13,30 @@ def _record(conn_id: str = "caller-ref") -> CdrRecord:
     )
 
 
-@pytest.mark.parametrize("caller_ref", [" caller-ref", "caller-ref ", "\tcaller-ref\n"])
-def test_padded_nonblank_caller_ref_fails_closed(caller_ref: str) -> None:
-    with pytest.raises(ValueError, match="surrounding whitespace"):
-        summarize_caller_timing((_record(),), caller_call_ref=caller_ref)
+class CallerRefWhitespaceGuardTests(unittest.TestCase):
+    def test_padded_nonblank_caller_ref_fails_closed(self) -> None:
+        for caller_ref in (" caller-ref", "caller-ref ", "\tcaller-ref\n"):
+            with self.subTest(caller_ref=caller_ref):
+                with self.assertRaisesRegex(ValueError, "surrounding whitespace"):
+                    summarize_caller_timing((_record(),), caller_call_ref=caller_ref)
+
+    def test_whitespace_only_ref_remains_not_evaluated(self) -> None:
+        summary = summarize_caller_timing((_record(),), caller_call_ref="   ")
+
+        self.assertEqual(summary["caller_call_ref"], "")
+        self.assertEqual(summary["caller_record_count"], 0)
+        self.assertEqual(summary["caller_timing_evidence"], "not_evaluated")
+        self.assertIsNone(summary["caller_t_ecd_seconds"])
+        self.assertIsNone(summary["caller_t_dba_seconds"])
+
+    def test_exact_nonblank_ref_is_preserved(self) -> None:
+        summary = summarize_caller_timing((_record(),), caller_call_ref="caller-ref")
+
+        self.assertEqual(summary["caller_call_ref"], "caller-ref")
+        self.assertEqual(
+            summary["caller_timing_evidence"], "single_complete_caller_timing_record"
+        )
 
 
-def test_whitespace_only_ref_remains_not_evaluated() -> None:
-    summary = summarize_caller_timing((_record(),), caller_call_ref="   ")
-
-    assert summary["caller_call_ref"] == ""
-    assert summary["caller_record_count"] == 0
-    assert summary["caller_timing_evidence"] == "not_evaluated"
-    assert summary["caller_t_ecd_seconds"] is None
-    assert summary["caller_t_dba_seconds"] is None
-
-
-def test_exact_nonblank_ref_is_preserved() -> None:
-    summary = summarize_caller_timing((_record(),), caller_call_ref="caller-ref")
-
-    assert summary["caller_call_ref"] == "caller-ref"
-    assert summary["caller_timing_evidence"] == "single_complete_caller_timing_record"
+if __name__ == "__main__":
+    unittest.main()
