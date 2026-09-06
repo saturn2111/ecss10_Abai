@@ -54,8 +54,11 @@ def summarize_caller_timing(
             "caller_t_dba_seconds": None,
         }
 
+    caller_records = tuple(records)
+    if any(type(record) is not CdrRecord for record in caller_records):
+        raise TypeError("records must contain exact CdrRecord values only")
     caller_records = tuple(
-        record for record in records if record.conn_id == caller_call_ref
+        record for record in caller_records if record.conn_id == caller_call_ref
     )
     complete = tuple(
         record
