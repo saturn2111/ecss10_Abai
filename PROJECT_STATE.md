@@ -1,7 +1,7 @@
 # ECSS-10 ДП Абай — PROJECT_STATE
 
 **Canonical source of truth для проекта**  
-**Последнее обновление:** 2026-09-05  
+**Последнее обновление:** 2026-09-06  
 **ECSS:** 3.18.0.271
 
 > Перед продолжением проекта читать этот файл и продолжать с раздела **«Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ»**. Не повторять подтверждённые этапы. Новые фактические данные пользователя имеют приоритет. Работать: одна операция → проверка → следующий шаг. Секреты не хранить и не повторять.
@@ -365,13 +365,14 @@ released без ранее подтверждённого operator answered
 
 Продолжать отсюда:
 
-Подготовлено 2026-09-04–2026-09-05 без подмены live-данных:
+Подготовлено 2026-09-04–2026-09-06 без подмены live-данных:
 - добавлен offline-инструмент `tools/cdr_queue_analyzer.py` для сопоставления CDR `CONN_ID` с двумя сохранёнными `call_ref`;
 - analyzer требует явные caller/operator `call_ref`, не пытается угадывать logical call id и fail-closed при отсутствии operator record;
 - synthetic unit tests проверяют CSV с запятой/точкой с запятой, выбор operator `T_ECD` и отсутствие догадок при пропущенной записи;
 - analyzer отдельно классифицирует exact-ref correlation, uniqueness, operator `T_ECD` и `T_DBA` evidence; malformed/negative/non-finite метрики fail-closed;
 - добавлена same-record timing evidence: отдельно считаются operator records, где на одной строке одновременно распарсены `T_ECD` и `T_DBA`, без выбора нового duration source и без трактовки `T_DBA` как queue wait time;
 - добавлен `selected_operator_has_complete_timing`: он описывает только уже выбранную exact operator record и равен true лишь когда на ней одновременно распарсены `T_ECD` и `T_DBA`; при ambiguous/no selection или неполных timing данных fail-closed возвращается false;
+- r25 candidate: дробные `T_ECD/T_DBA` больше не должны молча усекаться до целых; non-integral numeric timing трактуется как unavailable evidence, а integral decimal representation вроде `12.0` сохраняет значение 12;
 - никаких новых выводов о реальном queue-call без фактического CDR не зафиксировано.
 
 1. **Сейчас:** дождаться/получить `cdr_dp_abai_default_20260903_17_00_00_p.csv`, который должен содержать live queue-вызов `1001 -> 112 -> Operator2` 16:21–16:22.

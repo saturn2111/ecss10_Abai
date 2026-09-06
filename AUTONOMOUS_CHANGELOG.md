@@ -1,5 +1,13 @@
 # Autonomous development changelog
 
+## 2026-09-06 — Fractional CDR timing metric guard r25
+
+- Hardened offline `_to_int(...)` timing parsing so fractional `T_ECD`/`T_DBA` values are no longer silently truncated by `int(float(...))`.
+- Non-integral numeric timing values now fail closed to unavailable evidence; integral decimal representations such as `12.0` remain accepted as 12 seconds.
+- Added standard-library `unittest` coverage proving fractional operator duration is not selected/confirmed, fractional answer delay is not exposed as complete timing, and integral decimal forms remain deterministic.
+- This changes only offline CDR parsing. It does not infer queue wait, logical call identity, operator identity, final `finished.Duration`, or alter any live ECSS production configuration.
+- The real captured queue CDR remains required for final queue-call mapping.
+
 ## 2026-09-05 — Selected operator timing completeness evidence
 
 - Added `selected_operator_has_complete_timing` for the exact operator record already chosen by the existing fail-closed `T_ECD` selection rules.
