@@ -64,7 +64,8 @@ Verified main содержит:
 - r26 exact-decimal precision guard;
 - r27 exact caller-ref timing completeness evidence;
 - r28 raw `T_ECD/T_DBA` values только для ровно одной complete caller-ref row без competing incomplete rows;
-- r29 (`2bef15c732b4efc63f72957c4a0eb4371cce5539`) Forgejo GREEN и auto-merged в `main` как `77ac711877bdb6786e213f976c9eab33716e3f14`; `caller_call_ref` требует exact built-in `str`, malformed types fail closed.
+- r29 exact built-in string guard для `caller_call_ref`;
+- r30 (`3cafa0dc87045af8d52b60222bd6c15fd0be8d84`) Forgejo GREEN и auto-merged в `main` как `279c9acdef2345d08be411778c18f6ec8da01383`; caller timing evidence принимает только exact `CdrRecord` values.
 
 ## 11. CDR semantics — пока НЕ доказано
 
@@ -77,11 +78,11 @@ Verified main содержит:
 
 ## 12. Текущий offline increment
 
-`ai/cdr-caller-record-type-guard-r30` усиливает только входную границу offline exact-ref анализа:
-- после materialization входного iterable каждый элемент обязан быть exact `CdrRecord`; `None`, mappings, strings и произвольные объекты отклоняются явным `TypeError` вместо случайного attribute access;
-- exact `CdrRecord` behavior и single-complete timing selection не меняются;
-- regression tests покрывают malformed record values и обычный valid record;
-- helper по-прежнему не делает выводов о queue membership, queue wait, logical call identity или external Duration semantics.
+`ai/cdr-caller-ref-whitespace-guard-r31` усиливает exact-ref boundary без новых semantic assumptions:
+- padded nonblank caller refs (`" caller-ref"`, `"caller-ref "` и аналоги) fail-close с `ValueError` вместо тихого trim и последующего exact-match поиска по изменённому значению;
+- whitespace-only ref по-прежнему нормализуется в пустой ref и возвращает `not_evaluated` без CDR selection;
+- exact nonblank ref behavior не меняется;
+- regression tests покрывают padded, whitespace-only и exact cases.
 
 Никаких live ECSS/112/agent/routing/licensing изменений этот инкремент не делает.
 
@@ -91,7 +92,7 @@ Verified main содержит:
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
 
-1. Дать Forgejo проверить `ai/cdr-caller-record-type-guard-r30`; красный CI не обходить.
+1. Дать Forgejo проверить `ai/cdr-caller-ref-whitespace-guard-r31`; красный CI не обходить.
 2. Пока live телефоны/CDR недоступны — продолжать deterministic offline correlation tooling, tests и документацию.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.
