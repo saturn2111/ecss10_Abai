@@ -1,5 +1,14 @@
 # Autonomous development changelog
 
+## 2026-09-06 — Exact Decimal CDR timing precision guard r26
+
+- Replaced binary-float parsing of offline `T_ECD` / `T_DBA` timing evidence with exact `decimal.Decimal` parsing.
+- Large integral values such as `9007199254740993` are no longer rounded by IEEE-754 conversion before becoming analyzer evidence.
+- Fractional, negative and non-finite timing values still fail closed; integral decimal/comma forms such as `12.0` / `12,0` remain accepted.
+- Added standard-library regression tests for exact large integers, integral decimal forms and invalid/fractional/non-finite inputs.
+- This changes offline CDR parsing only. It does not infer queue wait, logical call identity, operator identity, final `finished.Duration`, or alter any live ECSS production configuration.
+- The real captured queue CDR remains required for final queue-call mapping.
+
 ## 2026-09-06 — Fractional CDR timing metric guard r25
 
 - Hardened offline `_to_int(...)` timing parsing so fractional `T_ECD`/`T_DBA` values are no longer silently truncated by `int(float(...))`.
