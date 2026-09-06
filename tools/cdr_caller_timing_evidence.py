@@ -49,6 +49,7 @@ def summarize_caller_timing(
             "caller_record_count": 0,
             "caller_complete_timing_record_count": 0,
             "caller_incomplete_timing_record_count": 0,
+            "caller_has_unique_complete_timing_record": False,
             "caller_timing_evidence": "not_evaluated",
             "caller_t_ecd_seconds": None,
             "caller_t_dba_seconds": None,
@@ -76,6 +77,7 @@ def summarize_caller_timing(
         "caller_record_count": len(caller_records),
         "caller_complete_timing_record_count": len(complete),
         "caller_incomplete_timing_record_count": incomplete_count,
+        "caller_has_unique_complete_timing_record": unique_complete is not None,
         "caller_timing_evidence": caller_timing_evidence(
             len(complete), incomplete_count
         ),
