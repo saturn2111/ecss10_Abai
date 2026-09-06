@@ -34,8 +34,10 @@ def summarize_caller_timing(
 ) -> dict[str, object]:
     """Summarize timing completeness for exact CONN_ID == caller_call_ref rows only.
 
-    The summary deliberately does not select a duration, infer a logical call id,
-    infer queue membership, or interpret T_DBA as queue wait time.
+    Exact T_ECD/T_DBA values are surfaced only when the caller ref resolves to one
+    complete row and no competing incomplete row. They remain raw field evidence:
+    this helper does not infer queue membership, queue wait, logical call identity,
+    or final duration semantics.
     """
 
     caller_call_ref = caller_call_ref.strip()
@@ -46,6 +48,8 @@ def summarize_caller_timing(
             "caller_complete_timing_record_count": 0,
             "caller_incomplete_timing_record_count": 0,
             "caller_timing_evidence": "not_evaluated",
+            "caller_t_ecd_seconds": None,
+            "caller_t_dba_seconds": None,
         }
 
     caller_records = tuple(
@@ -58,6 +62,7 @@ def summarize_caller_timing(
         and record.answer_delay_seconds is not None
     )
     incomplete_count = len(caller_records) - len(complete)
+    unique_complete = complete[0] if len(complete) == 1 and incomplete_count == 0 else None
 
     return {
         "caller_call_ref": caller_call_ref,
@@ -66,5 +71,11 @@ def summarize_caller_timing(
         "caller_incomplete_timing_record_count": incomplete_count,
         "caller_timing_evidence": caller_timing_evidence(
             len(complete), incomplete_count
+        ),
+        "caller_t_ecd_seconds": (
+            unique_complete.conversation_seconds if unique_complete is not None else None
+        ),
+        "caller_t_dba_seconds": (
+            unique_complete.answer_delay_seconds if unique_complete is not None else None
         ),
     }
