@@ -13,7 +13,8 @@
 - [x] Fail-closed duration/timing classifications.
 - [x] r26 exact integer parsing through `Decimal` without binary-float precision loss.
 - [x] r27 exact caller-ref timing completeness evidence; Forgejo GREEN and auto-merged as `d7fb0a7b7fac682e6c2678cc1b51c32be9b87e20`.
-- [ ] r28 surface raw T_ECD/T_DBA values only when exactly one complete caller-ref row exists and no competing incomplete row; awaiting Forgejo gate.
+- [x] r28 surface raw T_ECD/T_DBA values only when exactly one complete caller-ref row exists and no competing incomplete row; Forgejo GREEN and auto-merged as `8738b32dafd3223d85e992bbe6cfa837d652c419`.
+- [ ] r29 require exact string caller refs at the offline evidence boundary and fail closed on malformed types; awaiting Forgejo gate.
 - [ ] Validate queue-call CDR mapping against a real sanitized CDR captured from a confirmed live queue call.
 - [ ] Only after evidence, define which field/row maps to external `Duration` and whether any timing field has queue-wait semantics.
 

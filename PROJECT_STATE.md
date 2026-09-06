@@ -62,7 +62,8 @@ Verified main содержит:
 - exact-ref caller/operator correlation evidence;
 - operator-duration/timing evidence без heuristic row selection;
 - r26 exact-decimal precision guard;
-- r27 (`a1ee141193b647cb784109d9447115b4bb08b0b9`) Forgejo GREEN и auto-merged в `main` как `d7fb0a7b7fac682e6c2678cc1b51c32be9b87e20`; `summarize_caller_timing(...)` считает complete/incomplete timing rows только для exact `CONN_ID == caller_call_ref`.
+- r27 exact caller-ref timing completeness evidence;
+- r28 (`3e5a755e26d9e1de676445cf7c4ad82ad8b03d92`) Forgejo GREEN и auto-merged в `main` как `8738b32dafd3223d85e992bbe6cfa837d652c419`; raw `T_ECD/T_DBA` values публикуются только когда exact caller ref соответствует ровно одной complete row без competing incomplete rows.
 
 ## 11. CDR semantics — пока НЕ доказано
 
@@ -75,11 +76,11 @@ Verified main содержит:
 
 ## 12. Текущий offline increment
 
-`ai/cdr-caller-timing-values-r28` расширяет exact-ref evidence:
-- при ровно одной complete caller-ref строке и отсутствии конкурирующих incomplete rows выдаёт сырые `caller_t_ecd_seconds` и `caller_t_dba_seconds`;
-- при duplicate/mixed/no evidence оба selected-value поля остаются `None`;
-- значения не переименовываются в queue wait/duration и не используются для live production changes;
-- unit tests покрывают unique, duplicate, mixed и blank-ref случаи.
+`ai/cdr-caller-ref-type-guard-r29` усиливает только входную границу offline exact-ref анализа:
+- `caller_call_ref` должен быть exact built-in `str`; `None`, integers, booleans, bytes и другие типы отклоняются явным `TypeError` вместо случайного `.strip()`/coercion поведения;
+- blank string сохраняет прежний fail-closed `not_evaluated` результат без выбранных timing values;
+- regression tests покрывают malformed ref types и blank-ref behavior;
+- helper по-прежнему не делает выводов о queue membership, queue wait, logical call identity или external Duration semantics.
 
 Никаких live ECSS/112/agent/routing/licensing изменений этот инкремент не делает.
 
@@ -89,7 +90,7 @@ Verified main содержит:
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
 
-1. Дать Forgejo проверить `ai/cdr-caller-timing-values-r28`; красный CI не обходить.
+1. Дать Forgejo проверить `ai/cdr-caller-ref-type-guard-r29`; красный CI не обходить.
 2. Пока live телефоны/CDR недоступны — продолжать deterministic offline correlation tooling, tests и документацию.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.

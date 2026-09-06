@@ -40,6 +40,8 @@ def summarize_caller_timing(
     or final duration semantics.
     """
 
+    if type(caller_call_ref) is not str:
+        raise TypeError("caller_call_ref must be an exact string")
     caller_call_ref = caller_call_ref.strip()
     if not caller_call_ref:
         return {
