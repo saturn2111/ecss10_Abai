@@ -17,7 +17,8 @@
 - [x] r29 require exact string caller refs at the offline evidence boundary; Forgejo GREEN and auto-merged as `77ac711877bdb6786e213f976c9eab33716e3f14`.
 - [x] r30 require exact `CdrRecord` values at the caller timing evidence boundary; Forgejo GREEN and auto-merged as `279c9acdef2345d08be411778c18f6ec8da01383`.
 - [x] r31 reject surrounding whitespace on a nonblank exact caller ref; Forgejo GREEN and auto-merged as `109c94a1d7ed5e562edc8a01549241c759c7bfea`.
-- [ ] r32 expose a fail-closed boolean for exactly one complete caller timing record without changing CDR semantics; awaiting Forgejo gate.
+- [x] r32 expose a fail-closed boolean for exactly one complete caller timing record without changing CDR semantics; Forgejo GREEN and auto-merged as `5b294b3517c8af17b2482b63dc4952d45630fbe8`.
+- [ ] r33 synchronize canonical project memory after verified r32; awaiting Forgejo gate.
 - [ ] Validate queue-call CDR mapping against a real sanitized CDR captured from a confirmed live queue call.
 - [ ] Only after evidence, define which field/row maps to external `Duration` and whether any timing field has queue-wait semantics.
 
