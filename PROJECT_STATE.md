@@ -1,6 +1,6 @@
 # ECSS-10 ДП Абай — PROJECT_STATE
 
-Обновлено: 2026-09-06  
+Обновлено: 2026-09-07  
 Источник истины для продолжения проекта. Не возвращаться к уже подтверждённым этапам без новых фактических данных.
 
 ## 1. Архитектура
@@ -63,7 +63,8 @@ Verified main содержит:
 - operator-duration/timing evidence без heuristic row selection;
 - r26 exact-decimal precision guard;
 - r27 exact caller-ref timing completeness evidence;
-- r28 (`3e5a755e26d9e1de676445cf7c4ad82ad8b03d92`) Forgejo GREEN и auto-merged в `main` как `8738b32dafd3223d85e992bbe6cfa837d652c419`; raw `T_ECD/T_DBA` values публикуются только когда exact caller ref соответствует ровно одной complete row без competing incomplete rows.
+- r28 raw `T_ECD/T_DBA` values только для ровно одной complete caller-ref row без competing incomplete rows;
+- r29 (`2bef15c732b4efc63f72957c4a0eb4371cce5539`) Forgejo GREEN и auto-merged в `main` как `77ac711877bdb6786e213f976c9eab33716e3f14`; `caller_call_ref` требует exact built-in `str`, malformed types fail closed.
 
 ## 11. CDR semantics — пока НЕ доказано
 
@@ -76,10 +77,10 @@ Verified main содержит:
 
 ## 12. Текущий offline increment
 
-`ai/cdr-caller-ref-type-guard-r29` усиливает только входную границу offline exact-ref анализа:
-- `caller_call_ref` должен быть exact built-in `str`; `None`, integers, booleans, bytes и другие типы отклоняются явным `TypeError` вместо случайного `.strip()`/coercion поведения;
-- blank string сохраняет прежний fail-closed `not_evaluated` результат без выбранных timing values;
-- regression tests покрывают malformed ref types и blank-ref behavior;
+`ai/cdr-caller-record-type-guard-r30` усиливает только входную границу offline exact-ref анализа:
+- после materialization входного iterable каждый элемент обязан быть exact `CdrRecord`; `None`, mappings, strings и произвольные объекты отклоняются явным `TypeError` вместо случайного attribute access;
+- exact `CdrRecord` behavior и single-complete timing selection не меняются;
+- regression tests покрывают malformed record values и обычный valid record;
 - helper по-прежнему не делает выводов о queue membership, queue wait, logical call identity или external Duration semantics.
 
 Никаких live ECSS/112/agent/routing/licensing изменений этот инкремент не делает.
@@ -90,7 +91,7 @@ Verified main содержит:
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
 
-1. Дать Forgejo проверить `ai/cdr-caller-ref-type-guard-r29`; красный CI не обходить.
+1. Дать Forgejo проверить `ai/cdr-caller-record-type-guard-r30`; красный CI не обходить.
 2. Пока live телефоны/CDR недоступны — продолжать deterministic offline correlation tooling, tests и документацию.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.
