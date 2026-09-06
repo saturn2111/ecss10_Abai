@@ -1,5 +1,13 @@
 # Autonomous development changelog
 
+## 2026-09-06 — Offline CDR hour-window filename helper r26
+
+- Added `expected_closed_cdr_filename(...)` as an offline-only helper for the confirmed ECSS hourly closed-file naming convention.
+- A call inside hour `HH` maps to the closed CSV stamped at the next hour boundary; the confirmed 2026-09-03 16:21 queue call maps to `cdr_dp_abai_default_20260903_17_00_00_p.csv`.
+- Added deterministic rollover coverage across midnight and fail-closed validation for malformed domain/profile filename components.
+- The helper does not access ECSS, infer queue timing, select CDR records, or change the existing `T_ECD`/`T_DBA` correlation logic. No production configuration or live 112 state was changed.
+- The real captured queue CDR remains required for final `Duration`/`finished` mapping.
+
 ## 2026-09-05 — Selected operator timing completeness evidence
 
 - Added `selected_operator_has_complete_timing` for the exact operator record already chosen by the existing fail-closed `T_ECD` selection rules.
