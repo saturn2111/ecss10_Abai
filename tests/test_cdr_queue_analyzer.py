@@ -114,6 +114,14 @@ class CdrQueueAnalyzerTests(unittest.TestCase):
         finally:
             path.unlink(missing_ok=True)
 
+    def test_surplus_row_field_fails_closed_with_deterministic_error(self) -> None:
+        path = self._write("CONN_ID,T_ECD,T_DBA\nref,10,2,unexpected\n")
+        try:
+            with self.assertRaisesRegex(ValueError, "more fields than the header"):
+                load_cdr(path)
+        finally:
+            path.unlink(missing_ok=True)
+
 
 if __name__ == "__main__":
     unittest.main()
