@@ -58,6 +58,8 @@ def load_cdr(path: str | Path) -> list[CdrRecord]:
         )
 
     for raw_row in reader:
+        if None in raw_row:
+            raise ValueError("CDR row has more fields than the header")
         normalized = {
             (key or "").strip(): (value or "").strip()
             for key, value in raw_row.items()
