@@ -43,7 +43,7 @@ Live queue test до Operator2 подтверждал реальный прох�
 ## 10. Offline CDR tooling — verified baseline
 Offline tooling рассматривает CDR только как evidence. `CONN_ID`, `T_ECD`, `T_DBA` обрабатываются fail-closed; numeric parsing сохраняет exact integer semantics через `Decimal` и отклоняет отрицательные, fractional/non-finite/malformed значения.
 
-Verified main содержит required-header/duplicate-column guards, exact-ref correlation, evidence-only text/JSON/CLI, multi-artifact bundle, TSV report, summary/diff, standalone HTML report и r51 интерактивный локальный поиск/filter/reset по встроенному sanitized evidence.
+Verified main содержит required-header/duplicate-column guards, exact-ref correlation, evidence-only text/JSON/CLI, multi-artifact bundle, TSV report, summary/diff, standalone HTML report, r51 интерактивный локальный поиск/filter/reset и r52 export текущего visible subset в spreadsheet-safe CSV плюс print-to-PDF. r52 exact SHA `96090992735d5b305a89186fbddf743bf3a58495` прошёл Forgejo run 633 и auto-merged в `main` как `5c6d5322f471666adc2c95982b0d2b79c495e76d`.
 
 ## 11. CDR semantics — пока НЕ доказано
 Пока нет свежего live queue CDR, не считать доказанными:
@@ -54,22 +54,19 @@ Verified main содержит required-header/duplicate-column guards, exact-re
 - запись разговора/URL без фактического evidence.
 
 ## 12. Текущий offline increment
-`ai/cdr-html-export-r52` превращает интерактивный r51 HTML-report в практичный автономный операторский инструмент.
-- `Export visible CSV` выгружает только строки, которые сейчас видимы после локального поиска/classification filter; скрытые evidence rows не попадают в CSV.
-- `Print visible` печатает тот же отфильтрованный subset через браузерный print dialog; controls скрываются в print stylesheet, а скрытые строки не возвращаются на бумагу/PDF.
-- Export/print отключаются, когда фильтр оставил ноль строк.
-- CSV создаётся полностью в браузере из уже встроенной sanitized таблицы; сервер/ECSS-доступ не требуется.
-- Ячейки экранируются по CSV правилам, а значения с префиксами `=`, `+`, `-`, `@` нейтрализуются перед открытием в spreadsheet-клиенте.
-- Raw `T_ECD/T_DBA` остаются evidence-only и не переименовываются в queue wait/final Duration.
-- HTML schema поднята до `ecss-cdr-evidence-html-report-v4`; regression coverage проверяет visible-only export/print wiring, semantic boundary и spreadsheet-formula neutralization.
-- Live ECSS/112/agents/routing/licensing не менялись.
+`ai/cdr-visible-summary-r53` добавляет оператору живую сводку именно по текущему отфильтрованному subset.
+- Новый standalone report строится поверх уже проверенного r52 HTML и не меняет его evidence semantics.
+- Панель показывает visible items, суммарные CDR records, complete/incomplete timing rows и распределение exact evidence classifications.
+- Сводка пересчитывается локально после существующих Search / classification filter / Reset и использует только строки, которые реально остаются видимыми.
+- Raw `T_ECD/T_DBA` не превращаются в queue wait/final Duration; панель считает только уже существующие evidence rows/cardinality.
+- Сервер/ECSS-доступ не требуется, production данные не запрашиваются; добавлен regression test wiring/semantic boundary.
 
 ## 13. Live data boundary
 Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До этого продолжается только offline tooling/tests/docs.
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
-1. Дать Forgejo проверить новый exact SHA `ai/cdr-html-export-r52`; красный CI не обходить и `main` не форсировать.
-2. После GREEN следующий offline продуктовый шаг — компактная summary-панель выбранного evidence subset или сохранение operator notes, а не новый ряд микрогардов.
+1. Дать Forgejo проверить exact SHA `ai/cdr-visible-summary-r53`; красный CI не обходить и `main` не форсировать.
+2. После GREEN следующий offline продуктовый шаг — operator notes/bookmarks или более удобный review workflow, а не новый ряд микрогардов.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.
 5. Синхронизировать этот файл, `ROADMAP.md` и autonomous changelog после каждого завершённого инкремента.
