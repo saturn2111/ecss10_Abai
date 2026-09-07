@@ -43,7 +43,7 @@ Live queue test до Operator2 подтверждал реальный прох�
 ## 10. Offline CDR tooling — verified baseline
 Offline tooling рассматривает CDR только как evidence. `CONN_ID`, `T_ECD`, `T_DBA` обрабатываются fail-closed; numeric parsing сохраняет exact integer semantics через `Decimal` и отклоняет отрицательные, fractional/non-finite/malformed значения.
 
-Verified main содержит required-header/duplicate-column guards, exact-ref correlation, fail-closed timing diagnostics, evidence-only text/JSON/CLI, multi-artifact bundle, TSV report, deterministic summary и r49 summary-diff. r49 exact SHA `7dfba1b934e95db4c39a7e6fe2e5ab49494e1045` прошёл Forgejo GREEN run 595 и auto-merged.
+Verified main содержит required-header/duplicate-column guards, exact-ref correlation, evidence-only text/JSON/CLI, multi-artifact bundle, TSV report, summary/diff и r50 standalone human-readable HTML report. r50 auto-merged into `main` as `849ff2d0aa46a9e0c3d8a9bd2c255e1bb9fae624`.
 
 ## 11. CDR semantics — пока НЕ доказано
 Пока нет свежего live queue CDR, не считать доказанными:
@@ -54,20 +54,21 @@ Verified main содержит required-header/duplicate-column guards, exact-re
 - запись разговора/URL без фактического evidence.
 
 ## 12. Текущий offline increment
-`ai/cdr-html-report-r50` делает evidence set пригодным для просмотра обычным человеком, а не только Python/JSON tooling.
-- `tools/cdr_evidence_html_report.py` принимает sanitized evidence-bundle JSON и создаёт автономный HTML-файл.
-- В отчёте есть карточки общего числа evidence items/records/complete/incomplete, список exact evidence classifications и таблица caller refs + raw `T_ECD/T_DBA`.
-- Ambiguous timing остаётся `n/a`; raw timing явно не называется queue wait или final Duration.
-- Labels/refs HTML-escaped; schema/warning/cardinality mismatch fail-close.
-- Regression tests покрывают readable output, escaping и inconsistent cardinality.
+`ai/cdr-html-filter-r51` делает уже переносимый r50 HTML-report удобным для реальной работы с большим evidence bundle.
+- В автономный HTML добавлен локальный поиск по label/caller ref/classification.
+- Добавлен classification filter и Reset; счётчик сразу показывает сколько evidence rows осталось после фильтра.
+- Фильтрация работает только в браузере над уже встроенными sanitized rows и не требует сервера/ECSS-доступа.
+- `data-search` и classification values HTML-escaped; существующие labels/refs также остаются escaped.
+- Raw `T_ECD/T_DBA` остаются evidence-only; UI не переименовывает их в queue wait/final Duration.
+- Regression coverage проверяет наличие рабочих controls/predicates и сохраняет escaping/cardinality guards.
 - Live ECSS/112/agents/routing/licensing не менялись.
 
 ## 13. Live data boundary
 Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До этого продолжается только offline tooling/tests/docs.
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
-1. Дать Forgejo проверить exact SHA `ai/cdr-html-report-r50`; красный CI не обходить и `main` не форсировать.
-2. После GREEN использовать HTML report как переносимую человекочитаемую поверхность для bundle evidence, а JSON/TSV оставить машинными форматами.
+1. Дать Forgejo проверить exact SHA `ai/cdr-html-filter-r51`; красный CI не обходить и `main` не форсировать.
+2. После GREEN следующий offline продуктовый шаг — экспорт/печать выбранного evidence subset либо более удобная operator summary поверхность, а не новый ряд микрогардов.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.
 5. Синхронизировать этот файл, `ROADMAP.md` и autonomous changelog после каждого завершённого инкремента.
