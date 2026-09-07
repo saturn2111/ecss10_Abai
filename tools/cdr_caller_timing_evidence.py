@@ -27,6 +27,16 @@ def caller_timing_evidence(complete_count: int, incomplete_count: int) -> str:
     return "mixed_complete_and_incomplete_caller_timing_records"
 
 
+def caller_has_competing_timing_records(complete_count: int, incomplete_count: int) -> bool:
+    """Return true only when more than one exact-ref timing row competes as evidence."""
+
+    if type(complete_count) is not int or type(incomplete_count) is not int:
+        raise TypeError("caller timing counts must be exact integers")
+    if complete_count < 0 or incomplete_count < 0:
+        raise ValueError("caller timing counts must be non-negative")
+    return complete_count + incomplete_count > 1
+
+
 def summarize_caller_timing(
     records: Iterable[CdrRecord],
     *,
@@ -50,6 +60,7 @@ def summarize_caller_timing(
             "caller_complete_timing_record_count": 0,
             "caller_incomplete_timing_record_count": 0,
             "caller_has_unique_complete_timing_record": False,
+            "caller_has_competing_timing_records": False,
             "caller_timing_evidence": "not_evaluated",
             "caller_t_ecd_seconds": None,
             "caller_t_dba_seconds": None,
@@ -78,6 +89,9 @@ def summarize_caller_timing(
         "caller_complete_timing_record_count": len(complete),
         "caller_incomplete_timing_record_count": incomplete_count,
         "caller_has_unique_complete_timing_record": unique_complete is not None,
+        "caller_has_competing_timing_records": caller_has_competing_timing_records(
+            len(complete), incomplete_count
+        ),
         "caller_timing_evidence": caller_timing_evidence(
             len(complete), incomplete_count
         ),
