@@ -12,22 +12,23 @@
 - [x] Exact-ref caller/operator correlation evidence.
 - [x] Fail-closed duration/timing classifications and exact integer parsing through `Decimal`.
 - [x] Raw T_ECD/T_DBA values only when exactly one complete caller-ref row exists and no competing incomplete row.
-- [x] r42 evidence-only caller timing text report; GREEN run 535.
-- [x] r43 deterministic evidence-only JSON artifact; GREEN run 548.
-- [x] r44 practical offline CLI; GREEN run 553.
-- [x] r46 deterministic multi-artifact evidence bundle; GREEN run 565.
+- [x] r42 evidence-only caller timing text report.
+- [x] r43 deterministic evidence-only JSON artifact.
+- [x] r44 practical offline CLI.
+- [x] r46 deterministic multi-artifact evidence bundle.
 - [x] r47 deterministic human-readable TSV report.
 - [x] r48 deterministic bundle summary.
-- [x] r49 deterministic diff between validated bundle-summary artifacts; GREEN run 595.
-- [x] r50 standalone human-readable HTML report from sanitized evidence bundle; auto-merged into main.
-- [ ] r51 local in-report search + exact classification filter + result count/reset, still fully standalone/offline.
+- [x] r49 deterministic diff between validated bundle-summary artifacts.
+- [x] r50 standalone human-readable HTML report from sanitized evidence bundle.
+- [x] r51 local in-report search + exact classification filter + result count/reset, fully standalone/offline.
+- [ ] r52 export only the currently visible/filtered evidence rows to CSV with spreadsheet-safe cells.
 - [ ] Validate queue-call CDR mapping against a real sanitized CDR captured from a confirmed live queue call.
 - [ ] Only after evidence, define which field/row maps to external `Duration` and whether any timing field has queue-wait semantics.
 
 ## Product-facing offline goal
-- Prefer portable reports an operator/engineer can open directly (HTML/TSV) over more internal microguards while semantic live evidence is unavailable.
+- Prefer portable reports an operator/engineer can open directly (HTML/TSV/CSV) over more internal microguards while semantic live evidence is unavailable.
 - Keep JSON/bundle artifacts as machine-readable source evidence behind those views.
-- After r51 GREEN, prefer printable/exportable selected evidence or a compact operator summary over another internal guard layer.
+- After r52 GREEN, prefer a printable operator view or compact selected-subset summary over another internal guard layer.
 
 ## Rules
 - No live production changes without current factual data and explicit need.
