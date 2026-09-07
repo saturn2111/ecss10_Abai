@@ -27,44 +27,46 @@ def caller_timing_evidence(complete_count: int, incomplete_count: int) -> str:
     return "mixed_complete_and_incomplete_caller_timing_records"
 
 
-def caller_has_competing_timing_records(complete_count: int, incomplete_count: int) -> bool:
-    """Return true only when more than one exact-ref timing row competes as evidence."""
-
+def _validate_timing_counts(complete_count: int, incomplete_count: int) -> None:
     if type(complete_count) is not int or type(incomplete_count) is not int:
         raise TypeError("caller timing counts must be exact integers")
     if complete_count < 0 or incomplete_count < 0:
         raise ValueError("caller timing counts must be non-negative")
+
+
+def caller_has_competing_timing_records(complete_count: int, incomplete_count: int) -> bool:
+    """Return true only when more than one exact-ref timing row competes as evidence."""
+
+    _validate_timing_counts(complete_count, incomplete_count)
     return complete_count + incomplete_count > 1
 
 
 def caller_has_incomplete_timing_records(complete_count: int, incomplete_count: int) -> bool:
     """Return true when exact-ref evidence includes at least one incomplete timing row."""
 
-    if type(complete_count) is not int or type(incomplete_count) is not int:
-        raise TypeError("caller timing counts must be exact integers")
-    if complete_count < 0 or incomplete_count < 0:
-        raise ValueError("caller timing counts must be non-negative")
+    _validate_timing_counts(complete_count, incomplete_count)
     return incomplete_count > 0
 
 
 def caller_has_complete_timing_records(complete_count: int, incomplete_count: int) -> bool:
     """Return true when exact-ref evidence includes at least one complete timing row."""
 
-    if type(complete_count) is not int or type(incomplete_count) is not int:
-        raise TypeError("caller timing counts must be exact integers")
-    if complete_count < 0 or incomplete_count < 0:
-        raise ValueError("caller timing counts must be non-negative")
+    _validate_timing_counts(complete_count, incomplete_count)
     return complete_count > 0
 
 
 def caller_has_any_timing_records(complete_count: int, incomplete_count: int) -> bool:
     """Return true when exact-ref evidence contains any timing row at all."""
 
-    if type(complete_count) is not int or type(incomplete_count) is not int:
-        raise TypeError("caller timing counts must be exact integers")
-    if complete_count < 0 or incomplete_count < 0:
-        raise ValueError("caller timing counts must be non-negative")
+    _validate_timing_counts(complete_count, incomplete_count)
     return complete_count + incomplete_count > 0
+
+
+def caller_has_single_timing_record(complete_count: int, incomplete_count: int) -> bool:
+    """Return true only when exact-ref evidence contains exactly one timing row."""
+
+    _validate_timing_counts(complete_count, incomplete_count)
+    return complete_count + incomplete_count == 1
 
 
 def summarize_caller_timing(
@@ -94,6 +96,7 @@ def summarize_caller_timing(
             "caller_has_incomplete_timing_records": False,
             "caller_has_complete_timing_records": False,
             "caller_has_any_timing_records": False,
+            "caller_has_single_timing_record": False,
             "caller_timing_evidence": "not_evaluated",
             "caller_t_ecd_seconds": None,
             "caller_t_dba_seconds": None,
@@ -123,6 +126,7 @@ def summarize_caller_timing(
         "caller_has_incomplete_timing_records": caller_has_incomplete_timing_records(len(complete), incomplete_count),
         "caller_has_complete_timing_records": caller_has_complete_timing_records(len(complete), incomplete_count),
         "caller_has_any_timing_records": caller_has_any_timing_records(len(complete), incomplete_count),
+        "caller_has_single_timing_record": caller_has_single_timing_record(len(complete), incomplete_count),
         "caller_timing_evidence": caller_timing_evidence(len(complete), incomplete_count),
         "caller_t_ecd_seconds": unique_complete.conversation_seconds if unique_complete is not None else None,
         "caller_t_dba_seconds": unique_complete.answer_delay_seconds if unique_complete is not None else None,
