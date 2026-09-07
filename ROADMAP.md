@@ -12,13 +12,13 @@
 - [x] Exact-ref caller/operator correlation evidence.
 - [x] Fail-closed duration/timing classifications and exact integer parsing through `Decimal`.
 - [x] Raw T_ECD/T_DBA values only when exactly one complete caller-ref row exists and no competing incomplete row.
-- [x] Exact caller-ref/record/whitespace guards and unique-complete timing evidence.
 - [x] r35-r41 fail-closed timing evidence diagnostics through Forgejo GREEN.
-- [x] r42 evidence-only caller timing text report; fixed SHA GREEN run 535.
+- [x] r42 evidence-only caller timing text report; GREEN run 535.
 - [x] r43 deterministic evidence-only JSON artifact; GREEN run 548.
-- [x] r44 practical offline CLI for sanitized CDR + exact caller ref; GREEN run 553.
-- [x] r45 canonical state synchronization; auto-merged into `main` as `2b740529fd13811b00eb76a93aff6675fdc77985`.
-- [ ] r46 deterministic multi-artifact evidence bundle using repeated sanitized CDR/caller-ref items.
+- [x] r44 practical offline CLI; GREEN run 553.
+- [x] r45 canonical state synchronization.
+- [x] r46 deterministic multi-artifact evidence bundle; exact SHA `db4ad3943d1273fab4a4e4b7962180907619d6b4` GREEN run 565.
+- [ ] r47 deterministic human-readable TSV report from an evidence bundle.
 - [ ] Validate queue-call CDR mapping against a real sanitized CDR captured from a confirmed live queue call.
 - [ ] Only after evidence, define which field/row maps to external `Duration` and whether any timing field has queue-wait semantics.
 
