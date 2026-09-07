@@ -19,7 +19,8 @@
 - [x] r31 reject surrounding whitespace on a nonblank exact caller ref; Forgejo GREEN and auto-merged as `109c94a1d7ed5e562edc8a01549241c759c7bfea`.
 - [x] r32 expose a fail-closed boolean for exactly one complete caller timing record without changing CDR semantics; Forgejo GREEN and auto-merged as `5b294b3517c8af17b2482b63dc4952d45630fbe8`.
 - [x] r33 synchronize canonical project memory after verified r32; Forgejo GREEN and auto-merged as `32b5e7b403d526822d50227cd966140cf89ca930`.
-- [ ] r34 synchronize canonical project memory after verified r33; awaiting Forgejo gate.
+- [x] r34 synchronize canonical project memory after verified r33; Forgejo GREEN and auto-merged as `56ab687a154a4b5447c8463e5651853a1a116b63`.
+- [ ] r35 require exact built-in caller/operator ref pairs in the main offline queue analyzer and reject nonblank surrounding whitespace; awaiting Forgejo gate.
 - [ ] Validate queue-call CDR mapping against a real sanitized CDR captured from a confirmed live queue call.
 - [ ] Only after evidence, define which field/row maps to external `Duration` and whether any timing field has queue-wait semantics.
 
