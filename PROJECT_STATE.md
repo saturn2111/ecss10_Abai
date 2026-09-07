@@ -48,9 +48,10 @@ Verified main содержит:
 - exact-ref caller/operator correlation evidence;
 - raw `T_ECD/T_DBA` values только для ровно одной complete caller-ref row без competing incomplete rows;
 - fail-closed timing evidence/cardinality diagnostics;
-- r42-fix exact SHA `a2f84d4ad4bf713d84736590ede150f594f58819` Forgejo GREEN run 535 с evidence-only text report;
-- r43 exact SHA `8341f5f236d80920b8dd58fb10d6df961ac058fb` Forgejo GREEN run 548 и auto-merged в `main` как `9986985488948eb734ec05ceac8063ad3920ae9d`; deterministic JSON evidence artifact подтверждён;
-- r44 exact SHA `496f9d3c39f2aef38acd32898ac1e232c19bdbf2` Forgejo GREEN run 553 и auto-merged в `main` как `8c07b555fcb23f489a29dedeca42d8fc22a590cd`; practical offline CLI для sanitized CDR + exact caller ref подтверждён.
+- r42-fix evidence-only text report — GREEN run 535;
+- r43 deterministic evidence-only JSON artifact — GREEN run 548;
+- r44 practical offline CLI for sanitized CDR + exact caller ref — GREEN run 553;
+- r45 exact SHA `aed5ec4d58edcec56dcb1bc5d328b2e0defbafe2` passed Forgejo GREEN and auto-merged into `main` as `2b740529fd13811b00eb76a93aff6675fdc77985`, so the verified r44 baseline is canonically synchronized.
 
 ## 11. CDR semantics — пока НЕ доказано
 Пока нет свежего live queue CDR, не считать доказанными:
@@ -61,18 +62,19 @@ Verified main содержит:
 - запись разговора/URL без фактического evidence.
 
 ## 12. Текущий offline increment
-`ai/state-sync-r45` синхронизирует canonical Project State/Roadmap/changelog после подтверждённого r44 CLI.
-- Код parser/report/CLI не меняется и никакая новая CDR-семантика не вводится.
-- CLI остаётся evidence-only инструментом для sanitized файлов и exact caller ref.
-- Queue membership, queue wait, logical call identity и final external Duration по-прежнему не inferred.
+`ai/cdr-evidence-bundle-r46` превращает отдельные sanitized CDR reports в один полезный deterministic evidence bundle вместо очередного микрогарда.
+- Новый `tools/cdr_evidence_bundle.py` принимает повторяемые `--item LABEL CDR CALLER_REF`, для каждого sanitized файла использует уже verified `load_cdr(...)` и `build_caller_timing_report_json(...)`, затем формирует один schema-versioned JSON bundle.
+- Порядок evidence items сохраняется; labels должны быть уникальны. Ambiguous/incomplete timing остаётся `null` внутри исходного evidence report и не превращается в guessed semantics.
+- Bundle содержит явное предупреждение, что queue membership, queue wait, logical call identity и final Duration не inferred.
+- Добавлены regression tests для deterministic JSON, сохранения ambiguous null timing и duplicate-label rejection.
 - Никаких live ECSS/112/agent/routing/licensing изменений нет.
 
 ## 13. Live data boundary
 Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До этого продолжается только offline tooling/tests/docs.
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
-1. Дать Forgejo проверить `ai/state-sync-r45`; красный CI не обходить и `main` не форсировать.
-2. После GREEN не плодить новые микрогарды; следующий полезный offline шаг должен улучшать анализ/сравнение нескольких sanitized artifacts либо подготовку evidence bundle.
+1. Дать Forgejo проверить `ai/cdr-evidence-bundle-r46`; красный CI не обходить и `main` не форсировать.
+2. При GREEN использовать bundle как переносимый evidence artifact для нескольких sanitized captures/refs, не добавляя semantic guesses.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.
 5. Синхронизировать этот файл, `ROADMAP.md` и autonomous changelog после каждого завершённого инкремента.
@@ -84,7 +86,7 @@ Verified main содержит:
 - Не считать offline unit tests доказательством поведения production ECSS.
 
 ## 16. Evidence policy
-Каждое новое утверждение о live ECSS/CDR должно опираться на фактический capture/output. Offline helpers, reports и CLI должны fail-close при ambiguous/multiple/incomplete evidence.
+Каждое новое утверждение о live ECSS/CDR должно опираться на фактический capture/output. Offline helpers, reports, CLI и bundles должны fail-close при ambiguous/multiple/incomplete evidence.
 
 ## 17. Security
 - Не коммитить реальные passwords, API keys, JWT, cookies, Rutoken PIN или другие credentials.
