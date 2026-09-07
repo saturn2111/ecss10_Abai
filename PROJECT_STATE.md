@@ -51,11 +51,11 @@ Verified main содержит:
 - r27 exact caller-ref timing completeness evidence;
 - r28 raw `T_ECD/T_DBA` values только для ровно одной complete caller-ref row без competing incomplete rows;
 - r29 exact built-in string guard для `caller_call_ref`;
-- r30 (`3cafa0dc87045af8d52b60222bd6c15fd0be8d84`) Forgejo GREEN и auto-merged как `279c9acdef2345d08be411778c18f6ec8da01383`;
-- r31 (`30471948274c55ba60618d430143a3ae30edbb3b`) Forgejo GREEN и auto-merged как `109c94a1d7ed5e562edc8a01549241c759c7bfea`; surrounding whitespace у nonblank exact caller ref fail-close отклоняется;
-- r32 (`183ca7d6dd58016d02c1fa8a1073c8228ee362c6`) Forgejo GREEN и auto-merged как `5b294b3517c8af17b2482b63dc4952d45630fbe8`; `caller_has_unique_complete_timing_record` true только для ровно одной complete exact-ref caller row без competing incomplete row;
-- r33 (`6ab06cafbc36ed1e8afccf0192b5aa4fdc9d59ae`) Forgejo GREEN и auto-merged как `32b5e7b403d526822d50227cd966140cf89ca930`; canonical Project State/Roadmap/changelog синхронизированы после verified r32;
-- r34 (`6f1ef85583a2d78fa9ba8d5169a30ccf736bd955`) Forgejo GREEN и auto-merged в `main` как `56ab687a154a4b5447c8463e5651853a1a116b63`; canonical state отражает verified r33.
+- r30 exact `CdrRecord` element guard;
+- r31 surrounding-whitespace guard для nonblank exact caller ref;
+- r32 `caller_has_unique_complete_timing_record` true только для одной complete exact-ref caller row без competing incomplete row;
+- r33/r34 canonical state synchronization after verified tooling;
+- r35 (`8dab083ae625de344bb1d00062fce63e9fa0a2ef`) Forgejo GREEN и auto-merged в `main` как `edb6a3a0a13552fbd00605fbcf0a07f4d450ac9c`; `caller_has_competing_timing_records` теперь даёт fail-closed diagnostic projection для exact caller-ref timing evidence без semantic guesses.
 
 ## 11. CDR semantics — пока НЕ доказано
 Пока нет свежего live queue CDR, не считать доказанными:
@@ -66,19 +66,17 @@ Verified main содержит:
 - запись разговора/URL без фактического evidence.
 
 ## 12. Текущий offline increment
-`ai/cdr-caller-evidence-diagnostics-r35` добавляет fail-closed diagnostic projection `caller_has_competing_timing_records`.
-- `true` означает только то, что exact caller ref имеет больше одной timing row, то есть evidence конкурирует по количеству;
-- zero/single row возвращают `false`; invalid count types/negative values отклоняются;
-- existing raw `T_ECD/T_DBA` gating и `caller_has_unique_complete_timing_record` semantics не меняются;
-- helper не трактует queue membership, `T_DBA`, final Duration или logical call id.
-
-Никаких live ECSS/112/agent/routing/licensing изменений этот инкремент не делает.
+`ai/cdr-r35-state-sync-r36` синхронизирует PROJECT_STATE/ROADMAP/changelog после verified r35.
+- documentation-only increment;
+- existing raw `T_ECD/T_DBA` gating и unique/competing evidence semantics не меняются;
+- helper не трактует queue membership, `T_DBA`, final Duration или logical call id;
+- никаких live ECSS/112/agent/routing/licensing изменений нет.
 
 ## 13. Live data boundary
 Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До этого продолжается только offline tooling/tests/docs.
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
-1. Дать Forgejo проверить `ai/cdr-caller-evidence-diagnostics-r35`; красный CI не обходить.
+1. Дать Forgejo проверить `ai/cdr-r35-state-sync-r36`; красный CI не обходить.
 2. Пока live телефоны/CDR недоступны — продолжать deterministic offline correlation tooling, tests и документацию.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.
