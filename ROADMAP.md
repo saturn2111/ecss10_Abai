@@ -19,7 +19,8 @@
 - [x] r35 fail-closed `caller_has_competing_timing_records`; Forgejo GREEN and auto-merged as `edb6a3a0a13552fbd00605fbcf0a07f4d450ac9c`.
 - [x] r36 canonical state sync after verified r35; Forgejo GREEN and auto-merged as `d1b4a3b80f7f2a059aea97124c3f2f1f0b35fae7`.
 - [x] r37 fail-closed `caller_has_incomplete_timing_records`; Forgejo GREEN (`cc0de748c4b1ab4641044351823ed09f6ea30f4e`).
-- [ ] r38 expose fail-closed `caller_has_complete_timing_records` diagnostic without queue/CDR semantic guesses; awaiting Forgejo gate.
+- [x] r38 fail-closed `caller_has_complete_timing_records` diagnostic without queue/CDR semantic guesses; Forgejo GREEN (`ae7ef531ef9ca5d0a90d1cf410721e23e19812ce`, run 499).
+- [ ] r39 canonical state synchronization after verified r38; awaiting Forgejo gate.
 - [ ] Validate queue-call CDR mapping against a real sanitized CDR captured from a confirmed live queue call.
 - [ ] Only after evidence, define which field/row maps to external `Duration` and whether any timing field has queue-wait semantics.
 
