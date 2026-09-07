@@ -47,20 +47,11 @@ Verified main содержит:
 - required-header и duplicate-column guards;
 - exact-ref caller/operator correlation evidence;
 - operator-duration/timing evidence без heuristic row selection;
-- r26 exact-decimal precision guard;
-- r27 exact caller-ref timing completeness evidence;
-- r28 raw `T_ECD/T_DBA` values только для ровно одной complete caller-ref row без competing incomplete rows;
-- r29 exact built-in string guard для `caller_call_ref`;
-- r30 exact `CdrRecord` element guard;
-- r31 surrounding-whitespace guard для nonblank exact caller ref;
-- r32 `caller_has_unique_complete_timing_record` true только для одной complete exact-ref caller row без competing incomplete row;
-- r33/r34 canonical state synchronization after verified tooling;
-- r35 (`8dab083ae625de344bb1d00062fce63e9fa0a2ef`) Forgejo GREEN и auto-merged в `main` как `edb6a3a0a13552fbd00605fbcf0a07f4d450ac9c`; `caller_has_competing_timing_records` даёт fail-closed diagnostic projection;
-- r36 (`7692688b42dd8555fb05babc2dc11dcfd48baebd`) Forgejo GREEN и auto-merged в `main` как `d1b4a3b80f7f2a059aea97124c3f2f1f0b35fae7`;
-- r37 (`cc0de748c4b1ab4641044351823ed09f6ea30f4e`) Forgejo GREEN; `caller_has_incomplete_timing_records` verified как fail-closed diagnostic projection;
-- r38 (`ae7ef531ef9ca5d0a90d1cf410721e23e19812ce`) Forgejo GREEN (`ci-feedback` run 499); `caller_has_complete_timing_records` verified как fail-closed diagnostic projection без queue/CDR semantic guesses;
-- r39 (`99590cb426bf93f5900240907586e10eaacbd59c`) прошёл local gate и auto-merged в `main` как `6abe09c68219123713ae89afd743c3213da833f9`;
-- r40 (`5d03c34c01a4eea8d5a5e27db7a5d8ef107dd1ba`) Forgejo GREEN (`ci-feedback` run 511) и auto-merged в `main` как `817a33109a8b428c87a125dc3b25c05d1fbc1469`; `caller_has_any_timing_records` verified как fail-closed cardinality diagnostic без queue/CDR semantic guesses.
+- raw `T_ECD/T_DBA` values только для ровно одной complete caller-ref row без competing incomplete rows;
+- exact built-in string/record/whitespace guards;
+- fail-closed timing evidence/cardinality diagnostics;
+- r40 (`5d03c34c01a4eea8d5a5e27db7a5d8ef107dd1ba`) Forgejo GREEN (run 511) и auto-merged как `817a33109a8b428c87a125dc3b25c05d1fbc1469`;
+- r41 (`0a91265d9836332a563f62a01b998b3b6626fff3`) Forgejo GREEN (run 521) и auto-merged в `main` как `492992a36c65cf0d029f6a31b2c41bb3a125287f`; `caller_has_single_timing_record` verified как exact-cardinality diagnostic без semantic guesses.
 
 ## 11. CDR semantics — пока НЕ доказано
 Пока нет свежего live queue CDR, не считать доказанными:
@@ -71,19 +62,19 @@ Verified main содержит:
 - запись разговора/URL без фактического evidence.
 
 ## 12. Текущий offline increment
-`ai/cdr-single-timing-diagnostic-r41` добавляет fail-closed `caller_has_single_timing_record`.
-- helper принимает только exact non-negative integer counts и отклоняет bool/float/string/negative значения;
-- `true` означает только cardinality: для exact caller ref найдено ровно одно timing evidence row, независимо от complete/incomplete класса;
-- summary отдельно публикует этот diagnostic и не ослабляет existing raw `T_ECD/T_DBA` gating или unique-complete semantics;
-- helper не трактует queue membership, `T_DBA`, final Duration или logical call id;
-- никаких live ECSS/112/agent/routing/licensing изменений нет.
+`ai/cdr-timing-report-r42-fix` сохраняет полезный evidence-only report из r42 и исправляет только документный RED gate.
+- `build_caller_timing_report(...)` повторно использует verified `summarize_caller_timing(...)` и выводит caller ref, counts/classification и raw `T_ECD/T_DBA` только при однозначном evidence; ambiguous/multiple/mixed evidence даёт `n/a`.
+- Report всегда предупреждает, что queue membership, queue wait, logical call identity и final duration не inferred из raw timing fields.
+- Regression tests покрывают no evidence, unique complete, competing complete и mixed complete/incomplete evidence.
+- Первый exact r42 SHA `f4ca5fddc226f026e070152ce40458f2b0bf6dfa` получил RED run 534 только из-за удаления обязательных канонических заголовков PROJECT_STATE; validation log не указывал на failure report/tests.
+- Этот fix восстанавливает обязательную 17-section структуру без ослабления evidence semantics и без live ECSS изменений.
 
 ## 13. Live data boundary
 Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До этого продолжается только offline tooling/tests/docs.
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
-1. Дать Forgejo проверить `ai/cdr-single-timing-diagnostic-r41`; красный CI не обходить.
-2. Пока live телефоны/CDR недоступны — продолжать deterministic offline correlation tooling, tests и документацию.
+1. Дать Forgejo проверить `ai/cdr-timing-report-r42-fix`; красный CI не обходить.
+2. При GREEN использовать evidence-only report как безопасный offline artifact для следующего sanitized CDR анализа.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.
 5. Синхронизировать этот файл, `ROADMAP.md` и autonomous changelog после каждого завершённого инкремента.
@@ -95,7 +86,7 @@ Verified main содержит:
 - Не считать offline unit tests доказательством поведения production ECSS.
 
 ## 16. Evidence policy
-Каждое новое утверждение о live ECSS/CDR должно опираться на фактический capture/output. Offline helpers должны fail-close при ambiguous/multiple/incomplete evidence.
+Каждое новое утверждение о live ECSS/CDR должно опираться на фактический capture/output. Offline helpers и reports должны fail-close при ambiguous/multiple/incomplete evidence.
 
 ## 17. Security
 - Не коммитить реальные passwords, API keys, JWT, cookies, Rutoken PIN или другие credentials.
