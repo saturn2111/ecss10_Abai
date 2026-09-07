@@ -1,5 +1,12 @@
 # Autonomous development changelog
 
+## 2026-09-07 — verified offline CDR CLI state sync r45
+
+- Confirmed r44 exact SHA `496f9d3c39f2aef38acd32898ac1e232c19bdbf2` passed Forgejo GREEN run 553 and auto-merged into `main` as `8c07b555fcb23f489a29dedeca42d8fc22a590cd`.
+- Synchronized Project State and Roadmap so the practical sanitized-CDR exact-caller-ref text/JSON CLI is recorded as verified rather than pending.
+- Documentation-only increment: parser/report/CLI behavior and CDR semantics are unchanged; queue membership, queue wait, logical call identity and final external Duration are not inferred.
+- No live ECSS/112/agent/routing/licensing changes were made and no credentials or subscriber-sensitive raw production CDR were added.
+
 ## 2026-09-06 — Exact Decimal CDR timing precision guard r26
 
 - Replaced binary-float parsing of offline `T_ECD` / `T_DBA` timing evidence with exact `decimal.Decimal` parsing.
