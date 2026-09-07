@@ -10,24 +10,17 @@
 ## Offline CDR/correlation tooling
 - [x] Exact required-header and duplicate-column guards.
 - [x] Exact-ref caller/operator correlation evidence.
-- [x] Fail-closed duration/timing classifications.
-- [x] r26 exact integer parsing through `Decimal` without binary-float precision loss.
-- [x] r27 exact caller-ref timing completeness evidence.
-- [x] r28 raw T_ECD/T_DBA values only when exactly one complete caller-ref row exists and no competing incomplete row.
-- [x] r29-r32 exact caller-ref/record guards and unique-complete timing evidence.
-- [x] r33-r34 canonical project-memory synchronization through Forgejo GREEN.
-- [x] r35 fail-closed `caller_has_competing_timing_records`; Forgejo GREEN and auto-merged as `edb6a3a0a13552fbd00605fbcf0a07f4d450ac9c`.
-- [x] r36 canonical state sync after verified r35; Forgejo GREEN and auto-merged as `d1b4a3b80f7f2a059aea97124c3f2f1f0b35fae7`.
-- [x] r37 fail-closed `caller_has_incomplete_timing_records`; Forgejo GREEN (`cc0de748c4b1ab4641044351823ed09f6ea30f4e`).
-- [x] r38 fail-closed `caller_has_complete_timing_records` diagnostic without queue/CDR semantic guesses; Forgejo GREEN (`ae7ef531ef9ca5d0a90d1cf410721e23e19812ce`, run 499).
-- [x] r39 canonical state synchronization after verified r38; auto-merged as `6abe09c68219123713ae89afd743c3213da833f9`.
-- [x] r40 fail-closed `caller_has_any_timing_records` diagnostic without queue/CDR semantic guesses; Forgejo GREEN (`5d03c34c01a4eea8d5a5e27db7a5d8ef107dd1ba`, run 511) and auto-merged as `817a33109a8b428c87a125dc3b25c05d1fbc1469`.
-- [ ] r41 exact-cardinality `caller_has_single_timing_record` diagnostic; awaiting Forgejo gate.
+- [x] Fail-closed duration/timing classifications and exact integer parsing through `Decimal`.
+- [x] Raw T_ECD/T_DBA values only when exactly one complete caller-ref row exists and no competing incomplete row.
+- [x] Exact caller-ref/record/whitespace guards and unique-complete timing evidence.
+- [x] r35-r40 fail-closed timing evidence cardinality/presence diagnostics through Forgejo GREEN.
+- [x] r41 exact-cardinality `caller_has_single_timing_record`; exact SHA `0a91265d9836332a563f62a01b998b3b6626fff3` GREEN (run 521), auto-merged as `492992a36c65cf0d029f6a31b2c41bb3a125287f`.
+- [ ] r42 evidence-only caller timing report: deterministic offline summary of counts/classification and only unambiguous raw timing values, with explicit no-semantic-inference warning; awaiting Forgejo gate.
 - [ ] Validate queue-call CDR mapping against a real sanitized CDR captured from a confirmed live queue call.
 - [ ] Only after evidence, define which field/row maps to external `Duration` and whether any timing field has queue-wait semantics.
 
 ## Rules
 - No live production changes without current factual data and explicit need.
 - PROJECT_STATE is source of truth; do not redo verified licensing/VRRP/Mnesia/test2000/agents/route112 work.
-- While live CDR/phones are unavailable, stay offline-only: correlation tooling, tests and documentation.
+- While live CDR/phones are unavailable, prefer useful offline evidence/report tooling over endless microguards.
 - Never commit credentials, API keys, JWTs or subscriber-sensitive raw production data.
