@@ -16,8 +16,9 @@
 - [x] r28 raw T_ECD/T_DBA values only when exactly one complete caller-ref row exists and no competing incomplete row.
 - [x] r29-r32 exact caller-ref/record guards and unique-complete timing evidence.
 - [x] r33-r34 canonical project-memory synchronization through Forgejo GREEN.
-- [x] r35 expose fail-closed `caller_has_competing_timing_records` diagnostics for exact-ref timing evidence without queue/CDR semantic guesses; Forgejo GREEN and auto-merged as `edb6a3a0a13552fbd00605fbcf0a07f4d450ac9c`.
-- [ ] r36 synchronize canonical project memory after verified r35; awaiting Forgejo gate.
+- [x] r35 fail-closed `caller_has_competing_timing_records`; Forgejo GREEN and auto-merged as `edb6a3a0a13552fbd00605fbcf0a07f4d450ac9c`.
+- [x] r36 canonical state sync after verified r35; Forgejo GREEN and auto-merged as `d1b4a3b80f7f2a059aea97124c3f2f1f0b35fae7`.
+- [ ] r37 expose fail-closed `caller_has_incomplete_timing_records` diagnostic without queue/CDR semantic guesses; awaiting Forgejo gate.
 - [ ] Validate queue-call CDR mapping against a real sanitized CDR captured from a confirmed live queue call.
 - [ ] Only after evidence, define which field/row maps to external `Duration` and whether any timing field has queue-wait semantics.
 
