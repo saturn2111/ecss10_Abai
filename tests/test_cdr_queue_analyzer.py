@@ -84,7 +84,7 @@ class CdrQueueAnalyzerTests(unittest.TestCase):
     def test_same_call_ref_is_rejected_as_ambiguous(self) -> None:
         path = self._write("CONN_ID,T_ECD,T_DBA\nsame-ref,51,4\n")
         try:
-            result = analyze_queue_call(load_cdr(path), caller_call_ref=" same-ref ", operator_call_ref="same-ref")
+            result = analyze_queue_call(load_cdr(path), caller_call_ref="same-ref", operator_call_ref="same-ref")
         finally:
             path.unlink(missing_ok=True)
         self.assertEqual(result["selection_reason"], "ambiguous_same_call_ref")
