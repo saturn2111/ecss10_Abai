@@ -10,7 +10,7 @@ from pathlib import Path
 
 from tools.cdr_evidence_bundle import BUNDLE_SCHEMA, BUNDLE_WARNING
 
-HTML_SCHEMA = "ecss-cdr-evidence-html-report-v1"
+HTML_SCHEMA = "ecss-cdr-evidence-html-report-v2"
 
 
 def _require_int(value: object, field: str) -> int:
@@ -81,17 +81,22 @@ def build_html_report(payload: Mapping[str, object]) -> str:
 
     rows: list[str] = []
     for item in items:
-        label = html.escape(str(item["label"]))
+        label_raw = str(item["label"])
+        label = html.escape(label_raw)
         report = item["report"]
         assert isinstance(report, dict)
+        caller_ref_raw = str(report["caller_ref"])
+        evidence_raw = str(report["evidence"])
+        searchable = html.escape(f"{label_raw} {caller_ref_raw} {evidence_raw}".lower(), quote=True)
+        classification = html.escape(evidence_raw, quote=True)
         rows.append(
-            "<tr>"
+            f"<tr data-search='{searchable}' data-classification='{classification}'>"
             f"<td><strong>{label}</strong></td>"
-            f"<td><code>{html.escape(str(report['caller_ref']))}</code></td>"
+            f"<td><code>{html.escape(caller_ref_raw)}</code></td>"
             f"<td>{report['records']}</td>"
             f"<td>{report['complete']}</td>"
             f"<td>{report['incomplete']}</td>"
-            f"<td><span class='badge'>{html.escape(str(report['evidence']))}</span></td>"
+            f"<td><span class='badge'>{html.escape(evidence_raw)}</span></td>"
             f"<td>{_timing(report.get('raw_t_ecd_seconds'))}</td>"
             f"<td>{_timing(report.get('raw_t_dba_seconds'))}</td>"
             "</tr>"
@@ -101,6 +106,10 @@ def build_html_report(payload: Mapping[str, object]) -> str:
         f"<li><span>{html.escape(name)}</span><strong>{count}</strong></li>"
         for name, count in sorted(classification_counts.items())
     ) or "<li><span>No evidence items</span><strong>0</strong></li>"
+    classification_options = "".join(
+        f"<option value='{html.escape(name, quote=True)}'>{html.escape(name)} ({count})</option>"
+        for name, count in sorted(classification_counts.items())
+    )
 
     warning = html.escape(BUNDLE_WARNING)
     return f"""<!doctype html>
@@ -110,7 +119,7 @@ def build_html_report(payload: Mapping[str, object]) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ECSS CDR Evidence Report</title>
 <style>
-:root{{color-scheme:light dark;font-family:Segoe UI,Arial,sans-serif}}body{{margin:0;background:#f3f5f8;color:#18202b}}main{{max-width:1200px;margin:auto;padding:28px}}h1{{margin:0 0 6px}}.muted{{color:#687386}}.cards{{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:24px 0}}.card,.panel{{background:#fff;border:1px solid #dfe5ec;border-radius:14px;padding:18px}}.value{{font-size:28px;font-weight:700}}table{{width:100%;border-collapse:collapse;background:#fff}}th,td{{padding:12px;border-bottom:1px solid #e5e9ef;text-align:left;vertical-align:top}}th{{font-size:12px;text-transform:uppercase;color:#687386}}.panel{{overflow-x:auto}}.badge{{display:inline-block;padding:4px 8px;background:#edf2f7;border-radius:999px;font-size:12px}}.warning{{border-left:4px solid #a56a10;background:#fff7e6;padding:14px 16px;margin:18px 0;border-radius:8px}}ul{{list-style:none;padding:0;margin:0}}li{{display:flex;justify-content:space-between;gap:20px;padding:7px 0}}code{{font-family:Consolas,monospace}}@media(max-width:760px){{.cards{{grid-template-columns:repeat(2,1fr)}}main{{padding:16px}}}}@media(prefers-color-scheme:dark){{body{{background:#11161d;color:#edf2f7}}.card,.panel,table{{background:#1b222c;border-color:#303a47}}th,td{{border-color:#303a47}}.muted,th{{color:#aeb8c6}}.badge{{background:#2a3441}}.warning{{background:#342a17}}}}
+:root{{color-scheme:light dark;font-family:Segoe UI,Arial,sans-serif}}body{{margin:0;background:#f3f5f8;color:#18202b}}main{{max-width:1200px;margin:auto;padding:28px}}h1{{margin:0 0 6px}}.muted{{color:#687386}}.cards{{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:24px 0}}.card,.panel{{background:#fff;border:1px solid #dfe5ec;border-radius:14px;padding:18px}}.value{{font-size:28px;font-weight:700}}table{{width:100%;border-collapse:collapse;background:#fff}}th,td{{padding:12px;border-bottom:1px solid #e5e9ef;text-align:left;vertical-align:top}}th{{font-size:12px;text-transform:uppercase;color:#687386}}.panel{{overflow-x:auto}}.badge{{display:inline-block;padding:4px 8px;background:#edf2f7;border-radius:999px;font-size:12px}}.warning{{border-left:4px solid #a56a10;background:#fff7e6;padding:14px 16px;margin:18px 0;border-radius:8px}}ul{{list-style:none;padding:0;margin:0}}li{{display:flex;justify-content:space-between;gap:20px;padding:7px 0}}code{{font-family:Consolas,monospace}}.filters{{display:grid;grid-template-columns:minmax(220px,2fr) minmax(180px,1fr) auto;gap:10px;margin:12px 0 16px}}.filters input,.filters select,.filters button{{font:inherit;padding:10px 12px;border:1px solid #ccd5e0;border-radius:9px;background:#fff;color:inherit}}.filters button{{cursor:pointer}}.result-count{{font-size:13px;margin-bottom:10px}}tr[hidden]{{display:none}}@media(max-width:760px){{.cards{{grid-template-columns:repeat(2,1fr)}}.filters{{grid-template-columns:1fr}}main{{padding:16px}}}}@media(prefers-color-scheme:dark){{body{{background:#11161d;color:#edf2f7}}.card,.panel,table{{background:#1b222c;border-color:#303a47}}th,td{{border-color:#303a47}}.muted,th{{color:#aeb8c6}}.badge{{background:#2a3441}}.warning{{background:#342a17}}.filters input,.filters select,.filters button{{background:#151b23;border-color:#3a4655}}}}
 </style>
 </head>
 <body><main>
@@ -124,8 +133,37 @@ def build_html_report(payload: Mapping[str, object]) -> str:
 <div class="card"><div class="muted">Incomplete timing rows</div><div class="value">{total_incomplete}</div></div>
 </section>
 <section class="panel"><h2>Evidence classifications</h2><ul>{classification_html}</ul></section>
-<section class="panel" style="margin-top:16px"><h2>Caller-reference evidence</h2><table><thead><tr><th>Label</th><th>Caller ref</th><th>Records</th><th>Complete</th><th>Incomplete</th><th>Evidence</th><th>Raw T_ECD (s)</th><th>Raw T_DBA (s)</th></tr></thead><tbody>{''.join(rows)}</tbody></table></section>
-</main></body></html>"""
+<section class="panel" style="margin-top:16px"><h2>Caller-reference evidence</h2>
+<div class="filters"><input id="evidence-search" type="search" placeholder="Search label, caller ref or classification" aria-label="Search evidence"><select id="evidence-classification" aria-label="Filter by classification"><option value="">All classifications</option>{classification_options}</select><button id="evidence-reset" type="button">Reset</button></div>
+<div id="evidence-result-count" class="muted result-count">Showing {len(items)} of {len(items)} evidence items</div>
+<table><thead><tr><th>Label</th><th>Caller ref</th><th>Records</th><th>Complete</th><th>Incomplete</th><th>Evidence</th><th>Raw T_ECD (s)</th><th>Raw T_DBA (s)</th></tr></thead><tbody id="evidence-rows">{''.join(rows)}</tbody></table></section>
+</main>
+<script>
+(() => {{
+  'use strict';
+  const search = document.getElementById('evidence-search');
+  const classification = document.getElementById('evidence-classification');
+  const reset = document.getElementById('evidence-reset');
+  const counter = document.getElementById('evidence-result-count');
+  const rows = Array.from(document.querySelectorAll('#evidence-rows tr'));
+  const apply = () => {{
+    const needle = search.value.trim().toLowerCase();
+    const selected = classification.value;
+    let visible = 0;
+    for (const row of rows) {{
+      const matchesText = !needle || row.dataset.search.includes(needle);
+      const matchesClass = !selected || row.dataset.classification === selected;
+      row.hidden = !(matchesText && matchesClass);
+      if (!row.hidden) visible += 1;
+    }}
+    counter.textContent = `Showing ${{visible}} of ${{rows.length}} evidence items`;
+  }};
+  search.addEventListener('input', apply);
+  classification.addEventListener('change', apply);
+  reset.addEventListener('click', () => {{ search.value = ''; classification.value = ''; apply(); search.focus(); }});
+}})();
+</script>
+</body></html>"""
 
 
 def run(argv: Sequence[str] | None = None) -> int:
