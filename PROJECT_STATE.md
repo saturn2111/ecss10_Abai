@@ -43,18 +43,7 @@ Live queue test до Operator2 подтверждал реальный прох�
 ## 10. Offline CDR tooling — verified baseline
 Offline tooling рассматривает CDR только как evidence. `CONN_ID`, `T_ECD`, `T_DBA` обрабатываются fail-closed; numeric parsing сохраняет exact integer semantics через `Decimal` и отклоняет отрицательные, fractional/non-finite/malformed значения.
 
-Verified main содержит:
-- required-header и duplicate-column guards;
-- exact-ref caller/operator correlation evidence;
-- raw `T_ECD/T_DBA` values только для ровно одной complete caller-ref row без competing incomplete rows;
-- fail-closed timing evidence/cardinality diagnostics;
-- r42-fix evidence-only text report — GREEN run 535;
-- r43 deterministic evidence-only JSON artifact — GREEN run 548;
-- r44 practical offline CLI — GREEN run 553;
-- r45 canonical state sync;
-- r46 deterministic multi-artifact evidence bundle — GREEN run 565;
-- r47 deterministic TSV bundle report — GREEN;
-- r48 exact SHA `b42e2749154f10eea5f49ad75b22e0c6f996a10c` passed Forgejo GREEN and auto-merged into `main` as `9301d2b015d02b190f2583d442d60f30ad93797a`; deterministic bundle summary cardinality/classification counts are verified.
+Verified main содержит required-header/duplicate-column guards, exact-ref correlation, fail-closed timing diagnostics, evidence-only text/JSON/CLI, multi-artifact bundle, TSV report, deterministic summary и r49 summary-diff. r49 exact SHA `7dfba1b934e95db4c39a7e6fe2e5ab49494e1045` прошёл Forgejo GREEN run 595 и auto-merged.
 
 ## 11. CDR semantics — пока НЕ доказано
 Пока нет свежего live queue CDR, не считать доказанными:
@@ -65,19 +54,20 @@ Verified main содержит:
 - запись разговора/URL без фактического evidence.
 
 ## 12. Текущий offline increment
-`ai/cdr-bundle-summary-diff-r49` добавляет deterministic comparison двух уже сформированных sanitized bundle-summary artifacts.
-- Diff выдаёт signed delta для items/records/complete/incomplete и для exact evidence-classification counts.
-- Перед сравнением оба summary обязаны иметь ожидаемые schema/warning, согласованную cardinality и evidence counts, равные item count.
-- Отсутствующая classification трактуется как zero только при вычислении count delta; никакие queue/call semantics из этого не выводятся.
-- Результат сохраняет исходный evidence-only warning и не создаёт `queue_wait`, `final_duration` или `logical_call_id` полей.
-- Добавлены regression tests; live ECSS/112/agents/routing/licensing не менялись.
+`ai/cdr-html-report-r50` делает evidence set пригодным для просмотра обычным человеком, а не только Python/JSON tooling.
+- `tools/cdr_evidence_html_report.py` принимает sanitized evidence-bundle JSON и создаёт автономный HTML-файл.
+- В отчёте есть карточки общего числа evidence items/records/complete/incomplete, список exact evidence classifications и таблица caller refs + raw `T_ECD/T_DBA`.
+- Ambiguous timing остаётся `n/a`; raw timing явно не называется queue wait или final Duration.
+- Labels/refs HTML-escaped; schema/warning/cardinality mismatch fail-close.
+- Regression tests покрывают readable output, escaping и inconsistent cardinality.
+- Live ECSS/112/agents/routing/licensing не менялись.
 
 ## 13. Live data boundary
 Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До этого продолжается только offline tooling/tests/docs.
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
-1. Дать Forgejo проверить exact SHA `ai/cdr-bundle-summary-diff-r49`; красный CI не обходить и `main` не форсировать.
-2. При GREEN использовать bundle + TSV + summary + summary-diff как переносимый evidence set для сравнения нескольких sanitized captures без semantic guesses.
+1. Дать Forgejo проверить exact SHA `ai/cdr-html-report-r50`; красный CI не обходить и `main` не форсировать.
+2. После GREEN использовать HTML report как переносимую человекочитаемую поверхность для bundle evidence, а JSON/TSV оставить машинными форматами.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.
 5. Синхронизировать этот файл, `ROADMAP.md` и autonomous changelog после каждого завершённого инкремента.
