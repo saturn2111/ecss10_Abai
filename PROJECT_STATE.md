@@ -54,21 +54,22 @@ Verified main содержит required-header/duplicate-column guards, exact-re
 - запись разговора/URL без фактического evidence.
 
 ## 12. Текущий offline increment
-`ai/cdr-html-export-r52` превращает интерактивный r51 HTML-report в ещё более практичный автономный инструмент.
-- Добавлена кнопка `Export visible CSV`.
-- Экспорт содержит только строки, которые сейчас видимы после локального поиска/classification filter; скрытые evidence rows не попадают в CSV.
+`ai/cdr-html-export-r52` превращает интерактивный r51 HTML-report в практичный автономный операторский инструмент.
+- `Export visible CSV` выгружает только строки, которые сейчас видимы после локального поиска/classification filter; скрытые evidence rows не попадают в CSV.
+- `Print visible` печатает тот же отфильтрованный subset через браузерный print dialog; controls скрываются в print stylesheet, а скрытые строки не возвращаются на бумагу/PDF.
+- Export/print отключаются, когда фильтр оставил ноль строк.
 - CSV создаётся полностью в браузере из уже встроенной sanitized таблицы; сервер/ECSS-доступ не требуется.
 - Ячейки экранируются по CSV правилам, а значения с префиксами `=`, `+`, `-`, `@` нейтрализуются перед открытием в spreadsheet-клиенте.
 - Raw `T_ECD/T_DBA` остаются evidence-only и не переименовываются в queue wait/final Duration.
-- Regression coverage проверяет selected-visible export wiring, semantic boundary и spreadsheet-formula neutralization.
+- HTML schema поднята до `ecss-cdr-evidence-html-report-v4`; regression coverage проверяет visible-only export/print wiring, semantic boundary и spreadsheet-formula neutralization.
 - Live ECSS/112/agents/routing/licensing не менялись.
 
 ## 13. Live data boundary
 Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До этого продолжается только offline tooling/tests/docs.
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
-1. Дать Forgejo проверить exact SHA `ai/cdr-html-export-r52`; красный CI не обходить и `main` не форсировать.
-2. После GREEN следующий offline продуктовый шаг — printable operator view или компактная summary-панель выбранного evidence subset, а не новый ряд микрогардов.
+1. Дать Forgejo проверить новый exact SHA `ai/cdr-html-export-r52`; красный CI не обходить и `main` не форсировать.
+2. После GREEN следующий offline продуктовый шаг — компактная summary-панель выбранного evidence subset или сохранение operator notes, а не новый ряд микрогардов.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.
 5. Синхронизировать этот файл, `ROADMAP.md` и autonomous changelog после каждого завершённого инкремента.
