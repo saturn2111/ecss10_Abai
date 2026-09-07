@@ -16,13 +16,17 @@
 - [x] r42 evidence-only caller timing text report; GREEN run 535.
 - [x] r43 deterministic evidence-only JSON artifact; GREEN run 548.
 - [x] r44 practical offline CLI; GREEN run 553.
-- [x] r45 canonical state synchronization.
 - [x] r46 deterministic multi-artifact evidence bundle; GREEN run 565.
-- [x] r47 deterministic human-readable TSV report from an evidence bundle; GREEN and auto-merged.
-- [x] r48 deterministic bundle summary; exact SHA `b42e2749154f10eea5f49ad75b22e0c6f996a10c` GREEN and auto-merged.
-- [ ] r49 deterministic diff between two validated bundle-summary artifacts; no semantic inference.
+- [x] r47 deterministic human-readable TSV report.
+- [x] r48 deterministic bundle summary.
+- [x] r49 deterministic diff between validated bundle-summary artifacts; exact SHA `7dfba1b934e95db4c39a7e6fe2e5ab49494e1045` GREEN run 595 and auto-merged.
+- [ ] r50 standalone human-readable HTML report from sanitized evidence bundle, with cards/table and explicit evidence-only timing labels.
 - [ ] Validate queue-call CDR mapping against a real sanitized CDR captured from a confirmed live queue call.
 - [ ] Only after evidence, define which field/row maps to external `Duration` and whether any timing field has queue-wait semantics.
+
+## Product-facing offline goal
+- Prefer portable reports an operator/engineer can open directly (HTML/TSV) over more internal microguards while semantic live evidence is unavailable.
+- Keep JSON/bundle artifacts as machine-readable source evidence behind those views.
 
 ## Rules
 - No live production changes without current factual data and explicit need.
