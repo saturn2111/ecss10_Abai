@@ -54,6 +54,19 @@ def test_html_report_is_human_readable_and_keeps_raw_semantics() -> None:
     assert "not labelled as queue wait or final call duration" in rendered
 
 
+def test_html_report_has_local_search_and_classification_filter() -> None:
+    rendered = build_html_report(_bundle())
+
+    assert 'id="evidence-search"' in rendered
+    assert 'id="evidence-classification"' in rendered
+    assert 'id="evidence-reset"' in rendered
+    assert 'value=\'unique_complete\'' in rendered
+    assert 'value=\'competing_incomplete\'' in rendered
+    assert "Showing 2 of 2 evidence items" in rendered
+    assert "row.dataset.search.includes(needle)" in rendered
+    assert "row.dataset.classification === selected" in rendered
+
+
 def test_html_report_escapes_labels_and_refs() -> None:
     payload = _bundle()
     item = payload["items"][0]  # type: ignore[index]
