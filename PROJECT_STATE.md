@@ -57,7 +57,8 @@ Verified main содержит:
 - r33/r34 canonical state synchronization after verified tooling;
 - r35 (`8dab083ae625de344bb1d00062fce63e9fa0a2ef`) Forgejo GREEN и auto-merged в `main` как `edb6a3a0a13552fbd00605fbcf0a07f4d450ac9c`; `caller_has_competing_timing_records` даёт fail-closed diagnostic projection;
 - r36 (`7692688b42dd8555fb05babc2dc11dcfd48baebd`) Forgejo GREEN и auto-merged в `main` как `d1b4a3b80f7f2a059aea97124c3f2f1f0b35fae7`;
-- r37 (`cc0de748c4b1ab4641044351823ed09f6ea30f4e`) Forgejo GREEN; `caller_has_incomplete_timing_records` verified как fail-closed diagnostic projection.
+- r37 (`cc0de748c4b1ab4641044351823ed09f6ea30f4e`) Forgejo GREEN; `caller_has_incomplete_timing_records` verified как fail-closed diagnostic projection;
+- r38 (`ae7ef531ef9ca5d0a90d1cf410721e23e19812ce`) Forgejo GREEN (`ci-feedback` run 499); `caller_has_complete_timing_records` verified как fail-closed diagnostic projection без queue/CDR semantic guesses.
 
 ## 11. CDR semantics — пока НЕ доказано
 Пока нет свежего live queue CDR, не считать доказанными:
@@ -68,18 +69,17 @@ Verified main содержит:
 - запись разговора/URL без фактического evidence.
 
 ## 12. Текущий offline increment
-`ai/cdr-complete-timing-diagnostic-r38` добавляет `caller_has_complete_timing_records`.
-- helper принимает только exact non-negative integer counts и fail-close отклоняет bool/float/string/negative значения;
-- `summarize_caller_timing` теперь отдельно сообщает наличие хотя бы одной complete exact-ref timing row;
-- existing raw `T_ECD/T_DBA` gating, unique/competing/incomplete evidence semantics не ослабляются;
-- helper не трактует queue membership, `T_DBA`, final Duration или logical call id;
-- никаких live ECSS/112/agent/routing/licensing изменений нет.
+`ai/state-sync-r39` синхронизирует canonical Project State/Roadmap после подтверждённого GREEN r38.
+- runtime/live ECSS tooling не меняется;
+- queue membership, `T_DBA`, final Duration и logical call id не выводятся эвристически;
+- никаких live ECSS/112/agent/routing/licensing изменений нет;
+- реальный CDR/credentials/subscriber-sensitive data не добавляются.
 
 ## 13. Live data boundary
 Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До этого продолжается только offline tooling/tests/docs.
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
-1. Дать Forgejo проверить `ai/cdr-complete-timing-diagnostic-r38`; красный CI не обходить.
+1. Дать Forgejo проверить `ai/state-sync-r39`; красный CI не обходить.
 2. Пока live телефоны/CDR недоступны — продолжать deterministic offline correlation tooling, tests и документацию.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.
