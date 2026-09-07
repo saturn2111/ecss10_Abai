@@ -21,14 +21,14 @@
 - [x] r49 deterministic diff between validated bundle-summary artifacts.
 - [x] r50 standalone human-readable HTML report from sanitized evidence bundle.
 - [x] r51 local in-report search + exact classification filter + result count/reset, fully standalone/offline.
-- [ ] r52 export only the currently visible/filtered evidence rows to CSV with spreadsheet-safe cells.
+- [ ] r52 export currently visible/filtered evidence to spreadsheet-safe CSV and print the same visible subset to paper/PDF; exact tip still requires Forgejo GREEN.
 - [ ] Validate queue-call CDR mapping against a real sanitized CDR captured from a confirmed live queue call.
 - [ ] Only after evidence, define which field/row maps to external `Duration` and whether any timing field has queue-wait semantics.
 
 ## Product-facing offline goal
-- Prefer portable reports an operator/engineer can open directly (HTML/TSV/CSV) over more internal microguards while semantic live evidence is unavailable.
+- Prefer portable reports an operator/engineer can open directly (HTML/TSV/CSV/print-to-PDF) over more internal microguards while semantic live evidence is unavailable.
 - Keep JSON/bundle artifacts as machine-readable source evidence behind those views.
-- After r52 GREEN, prefer a printable operator view or compact selected-subset summary over another internal guard layer.
+- After r52 GREEN, prefer a compact selected-subset summary or operator notes over another internal guard layer.
 
 ## Rules
 - No live production changes without current factual data and explicit need.
