@@ -17,7 +17,8 @@
 - [x] r41 exact-cardinality caller timing diagnostic; GREEN run 521.
 - [x] r42 evidence-only caller timing text report; fixed SHA GREEN run 535.
 - [x] r43 deterministic evidence-only JSON artifact; exact SHA `8341f5f236d80920b8dd58fb10d6df961ac058fb` GREEN run 548 and auto-merged as `9986985488948eb734ec05ceac8063ad3920ae9d`.
-- [ ] r44 practical offline CLI for sanitized CDR + exact caller ref, reusing verified text/JSON report semantics; awaiting Forgejo gate.
+- [x] r44 practical offline CLI for sanitized CDR + exact caller ref; exact SHA `496f9d3c39f2aef38acd32898ac1e232c19bdbf2` GREEN run 553 and auto-merged as `8c07b555fcb23f489a29dedeca42d8fc22a590cd`.
+- [ ] r45 canonical state synchronization after verified r44.
 - [ ] Validate queue-call CDR mapping against a real sanitized CDR captured from a confirmed live queue call.
 - [ ] Only after evidence, define which field/row maps to external `Duration` and whether any timing field has queue-wait semantics.
 
