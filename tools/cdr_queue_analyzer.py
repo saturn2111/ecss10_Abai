@@ -169,11 +169,15 @@ def analyze_queue_call(
     caller_call_ref: str,
     operator_call_ref: str,
 ) -> dict[str, object]:
-    caller_call_ref = caller_call_ref.strip()
-    operator_call_ref = operator_call_ref.strip()
+    if type(caller_call_ref) is not str or type(operator_call_ref) is not str:
+        raise TypeError("caller_call_ref and operator_call_ref must be exact strings")
 
-    if not caller_call_ref or not operator_call_ref:
-        return _empty_result(caller_call_ref, operator_call_ref, "missing_call_ref")
+    caller_stripped = caller_call_ref.strip()
+    operator_stripped = operator_call_ref.strip()
+    if not caller_stripped or not operator_stripped:
+        return _empty_result(caller_stripped, operator_stripped, "missing_call_ref")
+    if caller_call_ref != caller_stripped or operator_call_ref != operator_stripped:
+        raise ValueError("call refs must not contain surrounding whitespace")
 
     if caller_call_ref == operator_call_ref:
         return _empty_result(caller_call_ref, operator_call_ref, "ambiguous_same_call_ref")
