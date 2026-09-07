@@ -37,6 +37,16 @@ def caller_has_competing_timing_records(complete_count: int, incomplete_count: i
     return complete_count + incomplete_count > 1
 
 
+def caller_has_incomplete_timing_records(complete_count: int, incomplete_count: int) -> bool:
+    """Return true when exact-ref evidence includes at least one incomplete timing row."""
+
+    if type(complete_count) is not int or type(incomplete_count) is not int:
+        raise TypeError("caller timing counts must be exact integers")
+    if complete_count < 0 or incomplete_count < 0:
+        raise ValueError("caller timing counts must be non-negative")
+    return incomplete_count > 0
+
+
 def summarize_caller_timing(
     records: Iterable[CdrRecord],
     *,
@@ -61,6 +71,7 @@ def summarize_caller_timing(
             "caller_incomplete_timing_record_count": 0,
             "caller_has_unique_complete_timing_record": False,
             "caller_has_competing_timing_records": False,
+            "caller_has_incomplete_timing_records": False,
             "caller_timing_evidence": "not_evaluated",
             "caller_t_ecd_seconds": None,
             "caller_t_dba_seconds": None,
@@ -71,14 +82,11 @@ def summarize_caller_timing(
     caller_records = tuple(records)
     if any(type(record) is not CdrRecord for record in caller_records):
         raise TypeError("records must contain exact CdrRecord values only")
-    caller_records = tuple(
-        record for record in caller_records if record.conn_id == caller_call_ref
-    )
+    caller_records = tuple(record for record in caller_records if record.conn_id == caller_call_ref)
     complete = tuple(
         record
         for record in caller_records
-        if record.conversation_seconds is not None
-        and record.answer_delay_seconds is not None
+        if record.conversation_seconds is not None and record.answer_delay_seconds is not None
     )
     incomplete_count = len(caller_records) - len(complete)
     unique_complete = complete[0] if len(complete) == 1 and incomplete_count == 0 else None
@@ -89,16 +97,9 @@ def summarize_caller_timing(
         "caller_complete_timing_record_count": len(complete),
         "caller_incomplete_timing_record_count": incomplete_count,
         "caller_has_unique_complete_timing_record": unique_complete is not None,
-        "caller_has_competing_timing_records": caller_has_competing_timing_records(
-            len(complete), incomplete_count
-        ),
-        "caller_timing_evidence": caller_timing_evidence(
-            len(complete), incomplete_count
-        ),
-        "caller_t_ecd_seconds": (
-            unique_complete.conversation_seconds if unique_complete is not None else None
-        ),
-        "caller_t_dba_seconds": (
-            unique_complete.answer_delay_seconds if unique_complete is not None else None
-        ),
+        "caller_has_competing_timing_records": caller_has_competing_timing_records(len(complete), incomplete_count),
+        "caller_has_incomplete_timing_records": caller_has_incomplete_timing_records(len(complete), incomplete_count),
+        "caller_timing_evidence": caller_timing_evidence(len(complete), incomplete_count),
+        "caller_t_ecd_seconds": unique_complete.conversation_seconds if unique_complete is not None else None,
+        "caller_t_dba_seconds": unique_complete.answer_delay_seconds if unique_complete is not None else None,
     }
