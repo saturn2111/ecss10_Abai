@@ -14,9 +14,10 @@
 - [x] Raw T_ECD/T_DBA values only when exactly one complete caller-ref row exists and no competing incomplete row.
 - [x] Exact caller-ref/record/whitespace guards and unique-complete timing evidence.
 - [x] r35-r40 fail-closed timing evidence cardinality/presence diagnostics through Forgejo GREEN.
-- [x] r41 exact-cardinality `caller_has_single_timing_record`; exact SHA `0a91265d9836332a563f62a01b998b3b6626fff3` GREEN run 521 and auto-merged as `492992a36c65cf0d029f6a31b2c41bb3a125287f`.
-- [x] r42 evidence-only caller timing report; fixed exact SHA `a2f84d4ad4bf713d84736590ede150f594f58819` GREEN run 535 and auto-merged as `7464a3c1ba9558a2923a7b2a5dc7d39ae94bb6fc`.
-- [ ] r43 deterministic evidence-only JSON artifact with null ambiguous timing values; awaiting Forgejo gate.
+- [x] r41 exact-cardinality caller timing diagnostic; GREEN run 521.
+- [x] r42 evidence-only caller timing text report; fixed SHA GREEN run 535.
+- [x] r43 deterministic evidence-only JSON artifact; exact SHA `8341f5f236d80920b8dd58fb10d6df961ac058fb` GREEN run 548 and auto-merged as `9986985488948eb734ec05ceac8063ad3920ae9d`.
+- [ ] r44 practical offline CLI for sanitized CDR + exact caller ref, reusing verified text/JSON report semantics; awaiting Forgejo gate.
 - [ ] Validate queue-call CDR mapping against a real sanitized CDR captured from a confirmed live queue call.
 - [ ] Only after evidence, define which field/row maps to external `Duration` and whether any timing field has queue-wait semantics.
 

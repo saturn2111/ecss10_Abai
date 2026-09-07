@@ -46,13 +46,10 @@ Offline tooling рассматривает CDR только как evidence. `CO
 Verified main содержит:
 - required-header и duplicate-column guards;
 - exact-ref caller/operator correlation evidence;
-- operator-duration/timing evidence без heuristic row selection;
 - raw `T_ECD/T_DBA` values только для ровно одной complete caller-ref row без competing incomplete rows;
-- exact built-in string/record/whitespace guards;
 - fail-closed timing evidence/cardinality diagnostics;
-- r40 (`5d03c34c01a4eea8d5a5e27db7a5d8ef107dd1ba`) Forgejo GREEN (run 511) и auto-merged как `817a33109a8b428c87a125dc3b25c05d1fbc1469`;
-- r41 (`0a91265d9836332a563f62a01b998b3b6626fff3`) Forgejo GREEN (run 521) и auto-merged в `main` как `492992a36c65cf0d029f6a31b2c41bb3a125287f`;
-- r42-fix exact SHA `a2f84d4ad4bf713d84736590ede150f594f58819` Forgejo GREEN (run 535) и auto-merged в `main` как `7464a3c1ba9558a2923a7b2a5dc7d39ae94bb6fc`; evidence-only caller timing report и защищённая 17-section структура PROJECT_STATE подтверждены.
+- r42-fix exact SHA `a2f84d4ad4bf713d84736590ede150f594f58819` Forgejo GREEN run 535 с evidence-only text report;
+- r43 exact SHA `8341f5f236d80920b8dd58fb10d6df961ac058fb` Forgejo GREEN run 548 и auto-merged в `main` как `9986985488948eb734ec05ceac8063ad3920ae9d`; deterministic JSON evidence artifact подтверждён.
 
 ## 11. CDR semantics — пока НЕ доказано
 Пока нет свежего live queue CDR, не считать доказанными:
@@ -63,11 +60,11 @@ Verified main содержит:
 - запись разговора/URL без фактического evidence.
 
 ## 12. Текущий offline increment
-`ai/cdr-timing-json-r43` превращает verified text report в пригодный для дальнейшего offline анализа deterministic JSON artifact без расширения CDR-семантики.
-- `build_caller_timing_report_json(...)` повторно использует тот же verified `summarize_caller_timing(...)` через общий payload builder.
-- JSON содержит exact caller ref, total/complete/incomplete counts, evidence classification, raw `T_ECD/T_DBA` и обязательное semantic warning.
-- При ambiguous/multiple/incomplete evidence raw timing fields остаются `null`; код не выбирает эвристически одну строку.
-- Сериализация deterministic: ASCII-safe, sorted keys, compact separators; tests проверяют unique complete, competing rows и стабильность результата.
+`ai/cdr-timing-cli-r44` превращает verified text/JSON report в практический offline CLI для sanitized CDR без расширения CDR-семантики.
+- `tools/cdr_timing_cli.py` принимает путь к sanitized CSV/TSV, обязательный exact `--caller-ref` и `--format text|json`.
+- CLI повторно использует verified `load_cdr(...)` и существующие report builders, а не реализует отдельную эвристику.
+- Missing/invalid input fail-closed возвращает код 2 и не делает production запросов.
+- Tests покрывают unique exact-ref text output, competing rows с JSON `null` для raw timing и missing-file failure.
 - Queue membership, queue wait, logical call identity и final external Duration по-прежнему не inferred.
 - Никаких live ECSS/112/agent/routing/licensing изменений нет.
 
@@ -75,8 +72,8 @@ Verified main содержит:
 Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До этого продолжается только offline tooling/tests/docs.
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
-1. Дать Forgejo проверить `ai/cdr-timing-json-r43`; красный CI не обходить и `main` не форсировать.
-2. При GREEN использовать text/JSON evidence-only reports как безопасные artifacts для следующего sanitized queue CDR анализа.
+1. Дать Forgejo проверить `ai/cdr-timing-cli-r44`; красный CI не обходить и `main` не форсировать.
+2. При GREEN использовать CLI text/JSON evidence artifacts для следующего sanitized queue CDR анализа.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.
 5. Синхронизировать этот файл, `ROADMAP.md` и autonomous changelog после каждого завершённого инкремента.
@@ -88,7 +85,7 @@ Verified main содержит:
 - Не считать offline unit tests доказательством поведения production ECSS.
 
 ## 16. Evidence policy
-Каждое новое утверждение о live ECSS/CDR должно опираться на фактический capture/output. Offline helpers и reports должны fail-close при ambiguous/multiple/incomplete evidence.
+Каждое новое утверждение о live ECSS/CDR должно опираться на фактический capture/output. Offline helpers, reports и CLI должны fail-close при ambiguous/multiple/incomplete evidence.
 
 ## 17. Security
 - Не коммитить реальные passwords, API keys, JWT, cookies, Rutoken PIN или другие credentials.
