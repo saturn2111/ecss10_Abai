@@ -49,7 +49,8 @@ Verified main содержит:
 - raw `T_ECD/T_DBA` values только для ровно одной complete caller-ref row без competing incomplete rows;
 - fail-closed timing evidence/cardinality diagnostics;
 - r42-fix exact SHA `a2f84d4ad4bf713d84736590ede150f594f58819` Forgejo GREEN run 535 с evidence-only text report;
-- r43 exact SHA `8341f5f236d80920b8dd58fb10d6df961ac058fb` Forgejo GREEN run 548 и auto-merged в `main` как `9986985488948eb734ec05ceac8063ad3920ae9d`; deterministic JSON evidence artifact подтверждён.
+- r43 exact SHA `8341f5f236d80920b8dd58fb10d6df961ac058fb` Forgejo GREEN run 548 и auto-merged в `main` как `9986985488948eb734ec05ceac8063ad3920ae9d`; deterministic JSON evidence artifact подтверждён;
+- r44 exact SHA `496f9d3c39f2aef38acd32898ac1e232c19bdbf2` Forgejo GREEN run 553 и auto-merged в `main` как `8c07b555fcb23f489a29dedeca42d8fc22a590cd`; practical offline CLI для sanitized CDR + exact caller ref подтверждён.
 
 ## 11. CDR semantics — пока НЕ доказано
 Пока нет свежего live queue CDR, не считать доказанными:
@@ -60,11 +61,9 @@ Verified main содержит:
 - запись разговора/URL без фактического evidence.
 
 ## 12. Текущий offline increment
-`ai/cdr-timing-cli-r44` превращает verified text/JSON report в практический offline CLI для sanitized CDR без расширения CDR-семантики.
-- `tools/cdr_timing_cli.py` принимает путь к sanitized CSV/TSV, обязательный exact `--caller-ref` и `--format text|json`.
-- CLI повторно использует verified `load_cdr(...)` и существующие report builders, а не реализует отдельную эвристику.
-- Missing/invalid input fail-closed возвращает код 2 и не делает production запросов.
-- Tests покрывают unique exact-ref text output, competing rows с JSON `null` для raw timing и missing-file failure.
+`ai/state-sync-r45` синхронизирует canonical Project State/Roadmap/changelog после подтверждённого r44 CLI.
+- Код parser/report/CLI не меняется и никакая новая CDR-семантика не вводится.
+- CLI остаётся evidence-only инструментом для sanitized файлов и exact caller ref.
 - Queue membership, queue wait, logical call identity и final external Duration по-прежнему не inferred.
 - Никаких live ECSS/112/agent/routing/licensing изменений нет.
 
@@ -72,8 +71,8 @@ Verified main содержит:
 Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До этого продолжается только offline tooling/tests/docs.
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
-1. Дать Forgejo проверить `ai/cdr-timing-cli-r44`; красный CI не обходить и `main` не форсировать.
-2. При GREEN использовать CLI text/JSON evidence artifacts для следующего sanitized queue CDR анализа.
+1. Дать Forgejo проверить `ai/state-sync-r45`; красный CI не обходить и `main` не форсировать.
+2. После GREEN не плодить новые микрогарды; следующий полезный offline шаг должен улучшать анализ/сравнение нескольких sanitized artifacts либо подготовку evidence bundle.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.
 5. Синхронизировать этот файл, `ROADMAP.md` и autonomous changelog после каждого завершённого инкремента.
