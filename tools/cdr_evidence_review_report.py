@@ -27,19 +27,28 @@ _REVIEW_SCRIPT = r"""
 (() => {
   'use strict';
   const rows = Array.from(document.querySelectorAll('#evidence-rows tr'));
-  const tableHead = document.querySelector('#evidence-rows')?.closest('table')?.querySelector('thead tr');
+  const table = document.querySelector('#evidence-rows')?.closest('table');
+  const tableHead = table?.querySelector('thead tr');
   const onlyButton = document.getElementById('review-bookmarked-only');
   const clearButton = document.getElementById('review-clear');
   const countNode = document.getElementById('review-count');
   const search = document.getElementById('evidence-search');
   const classification = document.getElementById('evidence-classification');
   const reset = document.getElementById('evidence-reset');
+  const resultCount = document.getElementById('evidence-result-count');
+  const exportButton = document.getElementById('evidence-export');
+  const printButton = document.getElementById('evidence-print');
+  const summaryItems = document.getElementById('visible-summary-items');
+  const summaryRecords = document.getElementById('visible-summary-records');
+  const summaryComplete = document.getElementById('visible-summary-complete');
+  const summaryIncomplete = document.getElementById('visible-summary-incomplete');
+  const summaryClasses = document.getElementById('visible-summary-classifications');
   let bookmarkedOnly = false;
 
   if (tableHead) {
     const th = document.createElement('th');
     th.textContent = 'Review';
-    tableHead.insertBefore(th, tableHead.firstChild);
+    tableHead.appendChild(th);
   }
 
   for (const [index, row] of rows.entries()) {
@@ -50,10 +59,9 @@ _REVIEW_SCRIPT = r"""
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.setAttribute('aria-label', `Bookmark evidence row ${index + 1}`);
-    const text = document.createTextNode(' ★');
-    label.append(checkbox, text);
+    label.append(checkbox, document.createTextNode(' ★'));
     cell.appendChild(label);
-    row.insertBefore(cell, row.firstChild);
+    row.appendChild(cell);
     checkbox.addEventListener('change', () => {
       row.dataset.bookmarked = checkbox.checked ? '1' : '0';
       refreshReview();
@@ -68,18 +76,61 @@ _REVIEW_SCRIPT = r"""
     return matchesText && matchesClass;
   };
 
+  const toCount = (cell) => {
+    const value = Number.parseInt(cell?.textContent || '', 10);
+    return Number.isFinite(value) && value >= 0 ? value : 0;
+  };
+
+  const refreshVisibleSummary = (visible) => {
+    if (!summaryItems || !summaryRecords || !summaryComplete || !summaryIncomplete || !summaryClasses) return;
+    let records = 0;
+    let complete = 0;
+    let incomplete = 0;
+    const classes = new Map();
+    for (const row of visible) {
+      records += toCount(row.cells[2]);
+      complete += toCount(row.cells[3]);
+      incomplete += toCount(row.cells[4]);
+      const name = row.dataset.classification || 'unknown';
+      classes.set(name, (classes.get(name) || 0) + 1);
+    }
+    summaryItems.textContent = String(visible.length);
+    summaryRecords.textContent = String(records);
+    summaryComplete.textContent = String(complete);
+    summaryIncomplete.textContent = String(incomplete);
+    summaryClasses.replaceChildren();
+    if (!classes.size) {
+      const li = document.createElement('li');
+      li.textContent = 'No visible evidence';
+      summaryClasses.appendChild(li);
+      return;
+    }
+    for (const [name, count] of Array.from(classes.entries()).sort((a, b) => a[0].localeCompare(b[0]))) {
+      const li = document.createElement('li');
+      const label = document.createElement('span');
+      const value = document.createElement('strong');
+      label.textContent = name;
+      value.textContent = String(count);
+      li.append(label, value);
+      summaryClasses.appendChild(li);
+    }
+  };
+
   const refreshReview = () => {
     let bookmarked = 0;
+    const visible = [];
     for (const row of rows) {
       const isBookmarked = row.dataset.bookmarked === '1';
       if (isBookmarked) bookmarked += 1;
       row.hidden = !baseVisible(row) || (bookmarkedOnly && !isBookmarked);
+      if (!row.hidden) visible.push(row);
     }
     countNode.textContent = `Bookmarked ${bookmarked} of ${rows.length} evidence items`;
     onlyButton.setAttribute('aria-pressed', String(bookmarkedOnly));
-    queueMicrotask(() => {
-      search?.dispatchEvent(new Event('input', { bubbles: false }));
-    });
+    if (resultCount) resultCount.textContent = `Showing ${visible.length} of ${rows.length} evidence items`;
+    if (exportButton) exportButton.disabled = visible.length === 0;
+    if (printButton) printButton.disabled = visible.length === 0;
+    refreshVisibleSummary(visible);
   };
 
   onlyButton.addEventListener('click', () => {
@@ -94,15 +145,9 @@ _REVIEW_SCRIPT = r"""
     }
     refreshReview();
   });
-  search?.addEventListener('input', () => {
-    if (bookmarkedOnly) queueMicrotask(refreshReview);
-  });
-  classification?.addEventListener('change', () => {
-    if (bookmarkedOnly) queueMicrotask(refreshReview);
-  });
-  reset?.addEventListener('click', () => {
-    if (bookmarkedOnly) queueMicrotask(refreshReview);
-  });
+  search?.addEventListener('input', () => queueMicrotask(refreshReview));
+  classification?.addEventListener('change', () => queueMicrotask(refreshReview));
+  reset?.addEventListener('click', () => queueMicrotask(refreshReview));
   refreshReview();
 })();
 </script>
