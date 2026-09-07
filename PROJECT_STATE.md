@@ -53,7 +53,8 @@ Verified main содержит:
 - r44 practical offline CLI — GREEN run 553;
 - r45 canonical state sync;
 - r46 deterministic multi-artifact evidence bundle — GREEN run 565;
-- r47 exact SHA `d30eaefa41ca9bf200a4f31303d583862d4476f1` passed Forgejo GREEN and auto-merged into `main` as `e228162db70d1664f7eeff330e1384d0acc847c0`; deterministic TSV bundle reporting is verified.
+- r47 deterministic TSV bundle report — GREEN;
+- r48 exact SHA `b42e2749154f10eea5f49ad75b22e0c6f996a10c` passed Forgejo GREEN and auto-merged into `main` as `9301d2b015d02b190f2583d442d60f30ad93797a`; deterministic bundle summary cardinality/classification counts are verified.
 
 ## 11. CDR semantics — пока НЕ доказано
 Пока нет свежего live queue CDR, не считать доказанными:
@@ -64,18 +65,19 @@ Verified main содержит:
 - запись разговора/URL без фактического evidence.
 
 ## 12. Текущий offline increment
-`ai/cdr-evidence-bundle-summary-r48` добавляет deterministic machine-readable summary уже проверенного multi-capture evidence bundle.
-- Summary считает число items, total records/complete/incomplete и counts по exact evidence classification.
-- Он требует исходную bundle schema/warning и consistent cardinality; неизвестная schema, altered warning или inconsistent counts fail-close.
-- Raw timing не агрегируется и никакие queue membership/queue wait/logical call/final Duration semantics не выводятся.
-- Добавлены regression tests; никаких live ECSS/112/agent/routing/licensing изменений нет.
+`ai/cdr-bundle-summary-diff-r49` добавляет deterministic comparison двух уже сформированных sanitized bundle-summary artifacts.
+- Diff выдаёт signed delta для items/records/complete/incomplete и для exact evidence-classification counts.
+- Перед сравнением оба summary обязаны иметь ожидаемые schema/warning, согласованную cardinality и evidence counts, равные item count.
+- Отсутствующая classification трактуется как zero только при вычислении count delta; никакие queue/call semantics из этого не выводятся.
+- Результат сохраняет исходный evidence-only warning и не создаёт `queue_wait`, `final_duration` или `logical_call_id` полей.
+- Добавлены regression tests; live ECSS/112/agents/routing/licensing не менялись.
 
 ## 13. Live data boundary
 Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До этого продолжается только offline tooling/tests/docs.
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
-1. Дать Forgejo проверить `ai/cdr-evidence-bundle-summary-r48`; красный CI не обходить и `main` не форсировать.
-2. При GREEN использовать bundle + TSV + summary как переносимый evidence artifact для нескольких sanitized captures/refs, не добавляя semantic guesses.
+1. Дать Forgejo проверить exact SHA `ai/cdr-bundle-summary-diff-r49`; красный CI не обходить и `main` не форсировать.
+2. При GREEN использовать bundle + TSV + summary + summary-diff как переносимый evidence set для сравнения нескольких sanitized captures без semantic guesses.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.
 5. Синхронизировать этот файл, `ROADMAP.md` и autonomous changelog после каждого завершённого инкремента.
