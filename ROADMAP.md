@@ -17,9 +17,10 @@
 - [x] r43 deterministic evidence-only JSON artifact; GREEN run 548.
 - [x] r44 practical offline CLI; GREEN run 553.
 - [x] r45 canonical state synchronization.
-- [x] r46 deterministic multi-artifact evidence bundle; exact SHA `db4ad3943d1273fab4a4e4b7962180907619d6b4` GREEN run 565.
-- [x] r47 deterministic human-readable TSV report from an evidence bundle; exact SHA `d30eaefa41ca9bf200a4f31303d583862d4476f1` GREEN and auto-merged.
-- [ ] r48 deterministic bundle summary: total cardinality plus evidence-classification counts, with no semantic inference.
+- [x] r46 deterministic multi-artifact evidence bundle; GREEN run 565.
+- [x] r47 deterministic human-readable TSV report from an evidence bundle; GREEN and auto-merged.
+- [x] r48 deterministic bundle summary; exact SHA `b42e2749154f10eea5f49ad75b22e0c6f996a10c` GREEN and auto-merged.
+- [ ] r49 deterministic diff between two validated bundle-summary artifacts; no semantic inference.
 - [ ] Validate queue-call CDR mapping against a real sanitized CDR captured from a confirmed live queue call.
 - [ ] Only after evidence, define which field/row maps to external `Duration` and whether any timing field has queue-wait semantics.
 
