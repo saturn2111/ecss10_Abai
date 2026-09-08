@@ -56,7 +56,8 @@ Verified main содержит required-header/duplicate-column guards, exact-re
 ## 12. Текущий offline increment
 `ai/cdr-html-bookmarks-r54` добавляет session-only operator review поверх уже проверенного standalone visible-summary report.
 - Каждая evidence row получает явный bookmark checkbox `★` без изменения исходных evidence values.
-- `Bookmarked only` позволяет быстро оставить на экране только отмеченные строки; `Clear bookmarks` очищает текущую локальную review-сессию.
+- `Bookmarked only` позволяет быстро оставить на экране только отмеченные строки; `Bookmark visible` одной командой отмечает текущий subset после Search/classification filter; `Clear bookmarks` очищает текущую локальную review-сессию.
+- `Bookmark visible` работает только по строкам, которые проходят базовый Search/classification filter, поэтому оператор может сначала сузить evidence, затем отметить весь найденный набор без ручного прокликивания каждой строки.
 - Закладки не сохраняются в `localStorage`, не отправляются на сервер/ECSS и исчезают при закрытии standalone HTML.
 - Existing search/classification filtering, result count, visible-summary, CSV export и print продолжают отражать фактически видимый subset; raw `T_ECD/T_DBA` остаются evidence only.
 - Новый report строится из sanitized bundle локально и не добавляет live production access.
