@@ -14,8 +14,9 @@ _REVIEW_PANEL = f"""
 <section class="panel" id="evidence-review" style="margin-top:16px">
 <h2>Operator review</h2>
 <div class="muted">Schema: {REVIEW_SCHEMA} · bookmarks are session-only and never sent to ECSS</div>
-<div class="filters" style="grid-template-columns:auto auto 1fr">
+<div class="filters" style="grid-template-columns:auto auto auto 1fr">
 <button id="review-bookmarked-only" type="button" aria-pressed="false">Bookmarked only</button>
+<button id="review-bookmark-visible" type="button">Bookmark visible</button>
 <button id="review-clear" type="button">Clear bookmarks</button>
 <div id="review-count" class="muted" style="align-self:center">Bookmarked 0 of 0 evidence items</div>
 </div>
@@ -30,6 +31,7 @@ _REVIEW_SCRIPT = r"""
   const table = document.querySelector('#evidence-rows')?.closest('table');
   const tableHead = table?.querySelector('thead tr');
   const onlyButton = document.getElementById('review-bookmarked-only');
+  const bookmarkVisibleButton = document.getElementById('review-bookmark-visible');
   const clearButton = document.getElementById('review-clear');
   const countNode = document.getElementById('review-count');
   const search = document.getElementById('evidence-search');
@@ -130,11 +132,21 @@ _REVIEW_SCRIPT = r"""
     if (resultCount) resultCount.textContent = `Showing ${visible.length} of ${rows.length} evidence items`;
     if (exportButton) exportButton.disabled = visible.length === 0;
     if (printButton) printButton.disabled = visible.length === 0;
+    if (bookmarkVisibleButton) bookmarkVisibleButton.disabled = visible.length === 0;
     refreshVisibleSummary(visible);
   };
 
   onlyButton.addEventListener('click', () => {
     bookmarkedOnly = !bookmarkedOnly;
+    refreshReview();
+  });
+  bookmarkVisibleButton?.addEventListener('click', () => {
+    for (const row of rows) {
+      if (!baseVisible(row)) continue;
+      row.dataset.bookmarked = '1';
+      const checkbox = row.querySelector('input[type="checkbox"]');
+      if (checkbox) checkbox.checked = true;
+    }
     refreshReview();
   });
   clearButton.addEventListener('click', () => {
