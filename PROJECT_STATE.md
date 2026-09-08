@@ -43,7 +43,7 @@ Live queue test до Operator2 подтверждал реальный прох�
 ## 10. Offline CDR tooling — verified baseline
 Offline tooling рассматривает CDR только как evidence. `CONN_ID`, `T_ECD`, `T_DBA` обрабатываются fail-closed; numeric parsing сохраняет exact integer semantics через `Decimal` и отклоняет отрицательные, fractional/non-finite/malformed значения.
 
-Verified main содержит required-header/duplicate-column guards, exact-ref correlation, evidence-only text/JSON/CLI, multi-artifact bundle, TSV report, summary/diff, standalone HTML report, r51 интерактивный локальный поиск/filter/reset и r52 export текущего visible subset в spreadsheet-safe CSV плюс print-to-PDF. r52 exact SHA `96090992735d5b305a89186fbddf743bf3a58495` прошёл Forgejo run 633 и auto-merged в `main` как `5c6d5322f471666adc2c95982b0d2b79c495e76d`.
+Verified main содержит required-header/duplicate-column guards, exact-ref correlation, evidence-only text/JSON/CLI, multi-artifact bundle, TSV report, summary/diff, standalone HTML report, r51 интерактивный локальный поиск/filter/reset, r52 export текущего visible subset в spreadsheet-safe CSV плюс print-to-PDF и r53 live summary текущего visible subset. r53 exact SHA `d9dbf9e339e96f3ec3cf591603edc86e42c16fdb` прошёл Forgejo run 638 и auto-merged в `main` как `11b3441961d366d37affa1f1d9715d91ef9daa57`.
 
 ## 11. CDR semantics — пока НЕ доказано
 Пока нет свежего live queue CDR, не считать доказанными:
@@ -54,19 +54,19 @@ Verified main содержит required-header/duplicate-column guards, exact-re
 - запись разговора/URL без фактического evidence.
 
 ## 12. Текущий offline increment
-`ai/cdr-visible-summary-r53` добавляет оператору живую сводку именно по текущему отфильтрованному subset.
-- Новый standalone report строится поверх уже проверенного r52 HTML и не меняет его evidence semantics.
-- Панель показывает visible items, суммарные CDR records, complete/incomplete timing rows и распределение exact evidence classifications.
-- Сводка пересчитывается локально после существующих Search / classification filter / Reset и использует только строки, которые реально остаются видимыми.
-- Raw `T_ECD/T_DBA` не превращаются в queue wait/final Duration; панель считает только уже существующие evidence rows/cardinality.
-- Сервер/ECSS-доступ не требуется, production данные не запрашиваются; добавлен regression test wiring/semantic boundary.
+`ai/cdr-html-bookmarks-r54` добавляет session-only operator review поверх уже проверенного standalone visible-summary report.
+- Каждая evidence row получает явный bookmark checkbox `★` без изменения исходных evidence values.
+- `Bookmarked only` позволяет быстро оставить на экране только отмеченные строки; `Clear bookmarks` очищает текущую локальную review-сессию.
+- Закладки не сохраняются в `localStorage`, не отправляются на сервер/ECSS и исчезают при закрытии standalone HTML.
+- Existing search/classification filtering, result count, visible-summary, CSV export и print продолжают отражать фактически видимый subset; raw `T_ECD/T_DBA` остаются evidence only.
+- Новый report строится из sanitized bundle локально и не добавляет live production access.
 
 ## 13. Live data boundary
 Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До этого продолжается только offline tooling/tests/docs.
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
-1. Дать Forgejo проверить exact SHA `ai/cdr-visible-summary-r53`; красный CI не обходить и `main` не форсировать.
-2. После GREEN следующий offline продуктовый шаг — operator notes/bookmarks или более удобный review workflow, а не новый ряд микрогардов.
+1. Дать Forgejo проверить exact final SHA `ai/cdr-html-bookmarks-r54`; красный CI не обходить и `main` не форсировать.
+2. После GREEN улучшать review workflow только если это даёт оператору реальную пользу; не возвращаться к бесконечной серии микрогардов.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.
 5. Синхронизировать этот файл, `ROADMAP.md` и autonomous changelog после каждого завершённого инкремента.
