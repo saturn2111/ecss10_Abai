@@ -45,7 +45,9 @@ Offline tooling рассматривает CDR только как evidence. `CO
 
 Verified main содержит required-header/duplicate-column guards, exact-ref correlation, evidence-only text/JSON/CLI, multi-artifact bundle, TSV report, summary/diff, standalone HTML report, r51 интерактивный локальный поиск/filter/reset, r52 export текущего visible subset в spreadsheet-safe CSV плюс print-to-PDF, r53 live summary, r54 session-only operator bookmarks, r55 local `Export visible JSON` и r56 local `Export visible Markdown`.
 
-r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo run 677 и auto-merged в main. r56 exact SHA `b00aadfa8059a69a1374c4bfd07cefa72d689ef6` прошёл Forgejo run 700 и auto-merged в canonical main `ce04bd3d676c872642091cb4dbd695eeed09a72e`.
+r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo run 677 и auto-merged. r56 exact SHA `b00aadfa8059a69a1374c4bfd07cefa72d689ef6` прошёл Forgejo run 700 и auto-merged в canonical main `ce04bd3d676c872642091cb4dbd695eeed09a72e`.
+
+Документационный r56 state-sync также уже прошёл gate и auto-merged в canonical main `29aa9affd04471fe934cfcfb9a4d7b83d6b11116`; его больше не считать pending-действием.
 
 ## 11. CDR semantics — пока НЕ доказано
 Пока нет свежего live queue CDR, не считать доказанными:
@@ -66,8 +68,8 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До его появления semantic mapping считается внешне заблокированным, а production ECSS не трогается.
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
-1. Синхронизировать r56 GREEN state через текущую documentation branch и дать обычному Forgejo gate проверить exact SHA; main вручную не двигать.
-2. Не плодить следующий микрогард. При отсутствии нового queue CDR переключаться на другие проекты.
+1. Не плодить следующий микрогард: r56 и его state-sync уже verified/merged.
+2. При отсутствии нового queue CDR переключаться на другие проекты.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости/одобрении.
 
