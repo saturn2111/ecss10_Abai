@@ -1,27 +1,34 @@
 from pathlib import Path
 
+from tools.cdr_evidence_bundle import BUNDLE_SCHEMA, BUNDLE_WARNING
 from tools.cdr_evidence_handoff_report import build_handoff_report
 
 
-def _payload() -> dict[str, object]:
+def _bundle() -> dict[str, object]:
+    warning = BUNDLE_WARNING.replace("evidence-only bundle; ", "raw timing fields only; ")
     return {
-        "schema": "ecss-cdr-evidence-bundle-v1",
+        "schema": BUNDLE_SCHEMA,
+        "warning": BUNDLE_WARNING,
         "items": [
             {
-                "source": "sanitized.tsv",
-                "caller_ref": "caller-a",
-                "classification": "complete_unique_caller_row",
-                "records": 1,
-                "complete_records": 1,
-                "incomplete_records": 0,
-                "evidence": {"CONN_ID": "caller-a", "T_ECD": "123", "T_DBA": "45"},
+                "label": "call-a",
+                "report": {
+                    "warning": warning,
+                    "caller_ref": "ref-a",
+                    "evidence": "unique-complete-caller-row",
+                    "records": 1,
+                    "complete": 1,
+                    "incomplete": 0,
+                    "raw_t_ecd_seconds": 10,
+                    "raw_t_dba_seconds": 20,
+                },
             }
         ],
     }
 
 
 def test_handoff_report_adds_local_visible_markdown_export() -> None:
-    rendered = build_handoff_report(_payload())
+    rendered = build_handoff_report(_bundle())
     assert 'id="review-export-markdown"' in rendered
     assert "Export visible Markdown" in rendered
     assert "# ECSS CDR Evidence Review" in rendered
