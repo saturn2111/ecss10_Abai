@@ -23,14 +23,14 @@
 - [x] r51 local in-report search + exact classification filter + result count/reset, fully standalone/offline.
 - [x] r52 visible-subset spreadsheet-safe CSV export plus print-to-PDF; GREEN run 633 and auto-merged.
 - [x] r53 live summary of the currently visible filtered evidence subset; GREEN run 638 and auto-merged.
-- [ ] r54 session-only operator bookmarks + Bookmarked-only review filter on the standalone report; exact final tip awaits Forgejo gate.
+- [ ] r54 session-only operator bookmarks, Bookmarked-only review and one-click `Bookmark visible` for the current Search/classification subset; exact final tip awaits Forgejo gate.
 - [ ] Validate queue-call CDR mapping against a real sanitized CDR captured from a confirmed live queue call.
 - [ ] Only after evidence, define which field/row maps to external `Duration` and whether any timing field has queue-wait semantics.
 
 ## Product-facing offline goal
 - Prefer portable reports an operator/engineer can open directly (HTML/TSV/CSV/print-to-PDF) over more internal microguards while semantic live evidence is unavailable.
 - Keep JSON/bundle artifacts as machine-readable source evidence behind those views.
-- r54 bookmarks are deliberately session-only: no browser persistence and no server/ECSS write.
+- r54 bookmarks are deliberately session-only: no browser persistence and no server/ECSS write; filtered subsets can be marked in one click before export/print review.
 - After r54 GREEN, prefer a larger useful review/export improvement only when justified rather than another internal guard layer.
 
 ## Rules
