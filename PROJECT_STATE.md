@@ -43,7 +43,7 @@ Live queue test до Operator2 подтверждал реальный прох�
 ## 10. Offline CDR tooling — verified baseline
 Offline tooling рассматривает CDR только как evidence. `CONN_ID`, `T_ECD`, `T_DBA` обрабатываются fail-closed; numeric parsing сохраняет exact integer semantics через `Decimal` и отклоняет отрицательные, fractional/non-finite/malformed значения.
 
-Verified main содержит required-header/duplicate-column guards, exact-ref correlation, evidence-only text/JSON/CLI, multi-artifact bundle, TSV report, summary/diff, standalone HTML report, r51 интерактивный локальный поиск/filter/reset, r52 export текущего visible subset в spreadsheet-safe CSV плюс print-to-PDF и r53 live summary текущего visible subset. r53 exact SHA `d9dbf9e339e96f3ec3cf591603edc86e42c16fdb` прошёл Forgejo run 638 и auto-merged в `main` как `11b3441961d366d37affa1f1d9715d91ef9daa57`.
+Verified main содержит required-header/duplicate-column guards, exact-ref correlation, evidence-only text/JSON/CLI, multi-artifact bundle, TSV report, summary/diff, standalone HTML report, r51 интерактивный локальный поиск/filter/reset, r52 export текущего visible subset в spreadsheet-safe CSV плюс print-to-PDF, r53 live summary текущего visible subset и базовый r54 session-only bookmark review. Базовый r54 был auto-merged локальным gate в current main `d9ff2dd1f1b206080f00064eafdd0ab0bfac5148`.
 
 ## 11. CDR semantics — пока НЕ доказано
 Пока нет свежего live queue CDR, не считать доказанными:
@@ -54,19 +54,21 @@ Verified main содержит required-header/duplicate-column guards, exact-re
 - запись разговора/URL без фактического evidence.
 
 ## 12. Текущий offline increment
-`ai/cdr-html-bookmarks-r54` добавляет session-only operator review поверх уже проверенного standalone visible-summary report.
-- Каждая evidence row получает явный bookmark checkbox `★` без изменения исходных evidence values.
-- `Bookmarked only` позволяет быстро оставить на экране только отмеченные строки; `Clear bookmarks` очищает текущую локальную review-сессию.
-- Закладки не сохраняются в `localStorage`, не отправляются на сервер/ECSS и исчезают при закрытии standalone HTML.
-- Existing search/classification filtering, result count, visible-summary, CSV export и print продолжают отражать фактически видимый subset; raw `T_ECD/T_DBA` остаются evidence only.
-- Новый report строится из sanitized bundle локально и не добавляет live production access.
+После auto-merge базового r54 старая ветка `ai/cdr-html-bookmarks-r54` стала divergent, поэтому её не продвигаем и не force-merge.
+
+Чистая ветка `ai/cdr-html-bookmark-visible-r54` создана от current `main` и содержит только ещё не merged операторское улучшение:
+- `Bookmark visible` отмечает одним действием ровно текущий subset, заданный existing Search + classification filter.
+- Если visible subset пуст, действие disabled.
+- После bulk-bookmark существующие `Bookmarked only`, CSV export, Print/PDF и visible summary продолжают работать по фактически видимому subset.
+- Закладки остаются session-only: нет `localStorage`, fetch/server calls или ECSS write.
+- Regression coverage фиксирует exact subset behavior и не позволяет переименовать raw `T_ECD/T_DBA` в неподтверждённые queue wait/final Duration.
 
 ## 13. Live data boundary
 Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До этого продолжается только offline tooling/tests/docs.
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
-1. Дать Forgejo проверить exact final SHA `ai/cdr-html-bookmarks-r54`; красный CI не обходить и `main` не форсировать.
-2. После GREEN улучшать review workflow только если это даёт оператору реальную пользу; не возвращаться к бесконечной серии микрогардов.
+1. Дать Forgejo проверить exact final SHA `ai/cdr-html-bookmark-visible-r54`; красный CI не обходить и `main` не форсировать.
+2. После GREEN переходить к следующему крупному полезному offline review/report increment, а не плодить микрогарды.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.
 5. Синхронизировать этот файл, `ROADMAP.md` и autonomous changelog после каждого завершённого инкремента.
@@ -76,6 +78,7 @@ Verified main содержит required-header/duplicate-column guards, exact-re
 - Не использовать heuristic guesses как production mapping.
 - Не менять боевой маршрут 112 без отдельной необходимости.
 - Не считать offline unit tests доказательством поведения production ECSS.
+- Не возвращать divergent `ai/cdr-html-bookmarks-r54` поверх уже продвинутого main.
 
 ## 16. Evidence policy
 Каждое новое утверждение о live ECSS/CDR должно опираться на фактический capture/output. Offline helpers, reports, CLI и bundles должны fail-close при ambiguous/multiple/incomplete evidence.
