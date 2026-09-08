@@ -9,30 +9,34 @@ from pathlib import Path
 from tools.cdr_evidence_visible_summary_report import build_visible_summary_report
 
 REVIEW_SCHEMA = "ecss-cdr-evidence-review-v1"
+VISIBLE_JSON_SCHEMA = "ecss-cdr-evidence-review-visible-v1"
 
 _REVIEW_PANEL = f"""
 <section class="panel" id="evidence-review" style="margin-top:16px">
 <h2>Operator review</h2>
 <div class="muted">Schema: {REVIEW_SCHEMA} · bookmarks are session-only and never sent to ECSS</div>
-<div class="filters" style="grid-template-columns:auto auto auto 1fr">
+<div class="filters" style="grid-template-columns:auto auto auto auto 1fr">
 <button id="review-bookmarked-only" type="button" aria-pressed="false">Bookmarked only</button>
 <button id="review-bookmark-visible" type="button">Bookmark visible</button>
 <button id="review-clear" type="button">Clear bookmarks</button>
+<button id="review-export-json" type="button">Export visible JSON</button>
 <div id="review-count" class="muted" style="align-self:center">Bookmarked 0 of 0 evidence items</div>
 </div>
 </section>
 """
 
-_REVIEW_SCRIPT = r"""
+_REVIEW_SCRIPT = rf"""
 <script>
-(() => {
+(() => {{
   'use strict';
+  const VISIBLE_JSON_SCHEMA = '{VISIBLE_JSON_SCHEMA}';
   const rows = Array.from(document.querySelectorAll('#evidence-rows tr'));
   const table = document.querySelector('#evidence-rows')?.closest('table');
   const tableHead = table?.querySelector('thead tr');
   const onlyButton = document.getElementById('review-bookmarked-only');
   const bookmarkVisibleButton = document.getElementById('review-bookmark-visible');
   const clearButton = document.getElementById('review-clear');
+  const exportJsonButton = document.getElementById('review-export-json');
   const countNode = document.getElementById('review-count');
   const search = document.getElementById('evidence-search');
   const classification = document.getElementById('evidence-classification');
@@ -47,67 +51,69 @@ _REVIEW_SCRIPT = r"""
   const summaryClasses = document.getElementById('visible-summary-classifications');
   let bookmarkedOnly = false;
 
-  if (tableHead) {
+  if (tableHead) {{
     const th = document.createElement('th');
     th.textContent = 'Review';
     tableHead.appendChild(th);
-  }
+  }}
 
-  for (const [index, row] of rows.entries()) {
+  for (const [index, row] of rows.entries()) {{
     row.dataset.bookmarked = '0';
     const cell = document.createElement('td');
     const label = document.createElement('label');
     label.style.whiteSpace = 'nowrap';
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
-    checkbox.setAttribute('aria-label', `Bookmark evidence row ${index + 1}`);
+    checkbox.setAttribute('aria-label', `Bookmark evidence row ${{index + 1}}`);
     label.append(checkbox, document.createTextNode(' ★'));
     cell.appendChild(label);
     row.appendChild(cell);
-    checkbox.addEventListener('change', () => {
+    checkbox.addEventListener('change', () => {{
       row.dataset.bookmarked = checkbox.checked ? '1' : '0';
       refreshReview();
-    });
-  }
+    }});
+  }}
 
-  const baseVisible = (row) => {
+  const baseVisible = (row) => {{
     const needle = search?.value.trim().toLowerCase() || '';
     const selected = classification?.value || '';
     const matchesText = !needle || (row.dataset.search || '').includes(needle);
     const matchesClass = !selected || row.dataset.classification === selected;
     return matchesText && matchesClass;
-  };
+  }};
 
-  const toCount = (cell) => {
+  const toCount = (cell) => {{
     const value = Number.parseInt(cell?.textContent || '', 10);
     return Number.isFinite(value) && value >= 0 ? value : 0;
-  };
+  }};
 
-  const refreshVisibleSummary = (visible) => {
+  const visibleRows = () => rows.filter((row) => !row.hidden);
+
+  const refreshVisibleSummary = (visible) => {{
     if (!summaryItems || !summaryRecords || !summaryComplete || !summaryIncomplete || !summaryClasses) return;
     let records = 0;
     let complete = 0;
     let incomplete = 0;
     const classes = new Map();
-    for (const row of visible) {
+    for (const row of visible) {{
       records += toCount(row.cells[2]);
       complete += toCount(row.cells[3]);
       incomplete += toCount(row.cells[4]);
       const name = row.dataset.classification || 'unknown';
       classes.set(name, (classes.get(name) || 0) + 1);
-    }
+    }}
     summaryItems.textContent = String(visible.length);
     summaryRecords.textContent = String(records);
     summaryComplete.textContent = String(complete);
     summaryIncomplete.textContent = String(incomplete);
     summaryClasses.replaceChildren();
-    if (!classes.size) {
+    if (!classes.size) {{
       const li = document.createElement('li');
       li.textContent = 'No visible evidence';
       summaryClasses.appendChild(li);
       return;
-    }
-    for (const [name, count] of Array.from(classes.entries()).sort((a, b) => a[0].localeCompare(b[0]))) {
+    }}
+    for (const [name, count] of Array.from(classes.entries()).sort((a, b) => a[0].localeCompare(b[0]))) {{
       const li = document.createElement('li');
       const label = document.createElement('span');
       const value = document.createElement('strong');
@@ -115,59 +121,89 @@ _REVIEW_SCRIPT = r"""
       value.textContent = String(count);
       li.append(label, value);
       summaryClasses.appendChild(li);
-    }
-  };
+    }}
+  }};
 
-  const refreshReview = () => {
+  const refreshReview = () => {{
     let bookmarked = 0;
     const visible = [];
-    for (const row of rows) {
+    for (const row of rows) {{
       const isBookmarked = row.dataset.bookmarked === '1';
       if (isBookmarked) bookmarked += 1;
       row.hidden = !baseVisible(row) || (bookmarkedOnly && !isBookmarked);
       if (!row.hidden) visible.push(row);
-    }
-    countNode.textContent = `Bookmarked ${bookmarked} of ${rows.length} evidence items`;
+    }}
+    countNode.textContent = `Bookmarked ${{bookmarked}} of ${{rows.length}} evidence items`;
     onlyButton.setAttribute('aria-pressed', String(bookmarkedOnly));
-    if (resultCount) resultCount.textContent = `Showing ${visible.length} of ${rows.length} evidence items`;
+    if (resultCount) resultCount.textContent = `Showing ${{visible.length}} of ${{rows.length}} evidence items`;
     if (exportButton) exportButton.disabled = visible.length === 0;
     if (printButton) printButton.disabled = visible.length === 0;
     if (bookmarkVisibleButton) bookmarkVisibleButton.disabled = visible.length === 0;
+    if (exportJsonButton) exportJsonButton.disabled = visible.length === 0;
     refreshVisibleSummary(visible);
-  };
+  }};
 
-  onlyButton.addEventListener('click', () => {
+  const exportVisibleJson = () => {{
+    const visible = visibleRows();
+    if (!visible.length || !tableHead) return;
+    const headers = Array.from(tableHead.cells).slice(0, -1).map((cell) => cell.textContent || '');
+    const payload = {{
+      schema: VISIBLE_JSON_SCHEMA,
+      evidence_semantics: 'raw-visible-values-only',
+      filters: {{
+        search: search?.value || '',
+        classification: classification?.value || '',
+        bookmarked_only: bookmarkedOnly,
+      }},
+      columns: headers,
+      rows: visible.map((row) => ({{
+        classification: row.dataset.classification || '',
+        bookmarked: row.dataset.bookmarked === '1',
+        values: Array.from(row.cells).slice(0, -1).map((cell) => cell.textContent || ''),
+      }})),
+    }};
+    const blob = new Blob([JSON.stringify(payload, null, 2) + '\n'], {{type: 'application/json;charset=utf-8'}});
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'ecss-cdr-visible-evidence.json';
+    document.body.appendChild(anchor);
+    try {{ anchor.click(); }} finally {{ anchor.remove(); URL.revokeObjectURL(url); }}
+  }};
+
+  onlyButton.addEventListener('click', () => {{
     bookmarkedOnly = !bookmarkedOnly;
     refreshReview();
-  });
-  bookmarkVisibleButton?.addEventListener('click', () => {
-    for (const row of rows) {
+  }});
+  bookmarkVisibleButton?.addEventListener('click', () => {{
+    for (const row of rows) {{
       if (!baseVisible(row)) continue;
       row.dataset.bookmarked = '1';
       const checkbox = row.querySelector('input[type="checkbox"]');
       if (checkbox) checkbox.checked = true;
-    }
+    }}
     refreshReview();
-  });
-  clearButton.addEventListener('click', () => {
-    for (const row of rows) {
+  }});
+  clearButton.addEventListener('click', () => {{
+    for (const row of rows) {{
       row.dataset.bookmarked = '0';
       const checkbox = row.querySelector('input[type="checkbox"]');
       if (checkbox) checkbox.checked = false;
-    }
+    }}
     refreshReview();
-  });
+  }});
+  exportJsonButton?.addEventListener('click', exportVisibleJson);
   search?.addEventListener('input', () => queueMicrotask(refreshReview));
   classification?.addEventListener('change', () => queueMicrotask(refreshReview));
   reset?.addEventListener('click', () => queueMicrotask(refreshReview));
   refreshReview();
-})();
+}})();
 </script>
 """
 
 
 def build_review_report(payload: Mapping[str, object]) -> str:
-    """Add session-only operator bookmarks to the verified standalone summary report."""
+    """Add session-only operator bookmarks and local visible-JSON export to the verified report."""
     rendered = build_visible_summary_report(payload)
     if "</main>" not in rendered or "</body>" not in rendered:
         raise ValueError("base visible-summary report has an unsupported layout")
@@ -177,7 +213,7 @@ def build_review_report(payload: Mapping[str, object]) -> str:
 
 def run(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Render the standalone ECSS evidence report with session-only operator bookmarks."
+        description="Render the standalone ECSS evidence report with session-only operator review tools."
     )
     parser.add_argument("bundle", help="Path to sanitized cdr_evidence_bundle JSON")
     parser.add_argument("output", help="Destination HTML path")
