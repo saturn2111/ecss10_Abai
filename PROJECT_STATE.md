@@ -43,9 +43,9 @@ Live queue test до Operator2 подтверждал реальный прох�
 ## 10. Offline CDR tooling — verified baseline
 Offline tooling рассматривает CDR только как evidence. `CONN_ID`, `T_ECD`, `T_DBA` обрабатываются fail-closed; numeric parsing сохраняет exact integer semantics через `Decimal` и отклоняет отрицательные, fractional/non-finite/malformed значения.
 
-Verified main содержит required-header/duplicate-column guards, exact-ref correlation, evidence-only text/JSON/CLI, multi-artifact bundle, TSV report, summary/diff, standalone HTML report, r51 интерактивный локальный поиск/filter/reset, r52 export текущего visible subset в spreadsheet-safe CSV плюс print-to-PDF, r53 live summary, r54 session-only operator bookmarks и r55 local `Export visible JSON`.
+Verified main содержит required-header/duplicate-column guards, exact-ref correlation, evidence-only text/JSON/CLI, multi-artifact bundle, TSV report, summary/diff, standalone HTML report, r51 интерактивный локальный поиск/filter/reset, r52 export текущего visible subset в spreadsheet-safe CSV плюс print-to-PDF, r53 live summary, r54 session-only operator bookmarks, r55 local `Export visible JSON` и r56 local `Export visible Markdown`.
 
-r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo run 677 и auto-merged в current main `de5a2799c5b2a6f078637d51bb626b8ff1d32b95`.
+r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo run 677 и auto-merged в main. r56 exact SHA `b00aadfa8059a69a1374c4bfd07cefa72d689ef6` прошёл Forgejo run 700 и auto-merged в canonical main `ce04bd3d676c872642091cb4dbd695eeed09a72e`.
 
 ## 11. CDR semantics — пока НЕ доказано
 Пока нет свежего live queue CDR, не считать доказанными:
@@ -55,25 +55,21 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 - какой CDR `T_ECD` должен стать внешним `Duration` для queue call;
 - запись разговора/URL без фактического evidence.
 
-## 12. Текущий offline increment — r56 Markdown handoff
-`ai/cdr-review-markdown-export-r56` добавляет portable handoff текущего operator-visible subset поверх verified r55 review workflow.
-- Новый standalone generator `tools/cdr_evidence_handoff_report.py` расширяет существующий verified review report, не меняя его CSV/Print/JSON/bookmark поведение.
-- `Export visible Markdown` выгружает только строки, которые фактически видимы в момент клика после Search/classification/Bookmarked-only фильтров.
-- Markdown содержит видимое количество элементов, активные фильтры, bookmark-only state, текущие visible columns/values и bookmark state строк.
-- Первая строка handoff явно фиксирует evidence policy: raw visible evidence only; `T_ECD/T_DBA` не переименовываются в queue wait/final Duration.
-- Table-cell markdown escaping обрабатывает backslash, `|` и line breaks, чтобы raw display values не ломали структуру handoff.
-- Artifact `ecss-cdr-visible-evidence.md` создаётся локально через browser `Blob`/object URL; нет `fetch`, `localStorage`, ECSS/server write или production access.
-- `tests/test_cdr_evidence_handoff_markdown_r56.py` использует verified bundle schema and locks the offline visible-subset boundary.
+## 12. Verified operator handoff baseline
+- Offline operator workflow теперь имеет portable handoff в HTML/TSV/CSV/JSON/Markdown/print-to-PDF.
+- `Export visible Markdown` выгружает только строки, фактически видимые после Search/classification/Bookmarked-only фильтров, вместе с filter context и bookmark state.
+- Markdown и остальные offline views сохраняют raw evidence labels; `T_ECD/T_DBA` не переименовываются в queue wait/final Duration.
+- Browser exports остаются local-only через Blob/object URL; нет `fetch`, `localStorage`, ECSS/server write или production access.
+- После r56 GREEN не добавлять мелкие guard/presentation слои только ради активности: следующий offline шаг должен давать заметную correlation/operator пользу либо ждать новых фактических данных.
 
 ## 13. Live data boundary
-Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До этого продолжается только offline tooling/tests/docs.
+Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До его появления semantic mapping считается внешне заблокированным, а production ECSS не трогается.
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
-1. Дать Forgejo проверить exact final SHA `ai/cdr-review-markdown-export-r56`; красный CI не обходить и `main` не форсировать.
-2. После GREEN не плодить мелкие guard-слои; следующий offline шаг должен быть заметной operator/correlation пользой или ждать real sanitized queue CDR.
+1. Синхронизировать r56 GREEN state через текущую documentation branch и дать обычному Forgejo gate проверить exact SHA; main вручную не двигать.
+2. Не плодить следующий микрогард. При отсутствии нового queue CDR переключаться на другие проекты.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
-4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.
-5. Синхронизировать этот файл, `ROADMAP.md` и autonomous changelog после каждого завершённого инкремента.
+4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости/одобрении.
 
 ## 15. Что не делать
 - Не повторять licence/VRRP/Mnesia/test2000/agents/route112 setup.
