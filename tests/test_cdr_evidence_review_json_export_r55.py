@@ -1,5 +1,28 @@
+from tools.cdr_evidence_bundle import BUNDLE_SCHEMA, BUNDLE_WARNING
 from tools.cdr_evidence_review_report import VISIBLE_JSON_SCHEMA, build_review_report
-from tests.test_cdr_evidence_review_report_r54 import _bundle
+
+
+def _bundle() -> dict[str, object]:
+    warning = BUNDLE_WARNING.replace("evidence-only bundle; ", "raw timing fields only; ")
+    return {
+        "schema": BUNDLE_SCHEMA,
+        "warning": BUNDLE_WARNING,
+        "items": [
+            {
+                "label": "call-a",
+                "report": {
+                    "warning": warning,
+                    "caller_ref": "ref-a",
+                    "evidence": "unique-complete-caller-row",
+                    "records": 1,
+                    "complete": 1,
+                    "incomplete": 0,
+                    "raw_t_ecd_seconds": 10,
+                    "raw_t_dba_seconds": 20,
+                },
+            }
+        ],
+    }
 
 
 def test_review_report_exports_only_visible_rows_as_local_evidence_json() -> None:
