@@ -44,9 +44,12 @@ def test_review_report_adds_session_only_bookmarks_without_changing_timing_seman
     assert REVIEW_SCHEMA in rendered
     assert "bookmarks are session-only and never sent to ECSS" in rendered
     assert "Bookmarked only" in rendered
+    assert "Bookmark visible" in rendered
     assert "Clear bookmarks" in rendered
     assert "Bookmark evidence row" in rendered
     assert "row.dataset.bookmarked" in rendered
+    assert "if (!baseVisible(row)) continue;" in rendered
+    assert "bookmarkVisibleButton.disabled = visible.length === 0" in rendered
     assert "refreshVisibleSummary(visible)" in rendered
     assert "queue wait" in rendered
     assert "final call duration" in rendered
