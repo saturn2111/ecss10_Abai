@@ -43,7 +43,7 @@ Live queue test до Operator2 подтверждал реальный прох�
 ## 10. Offline CDR tooling — verified baseline
 Offline tooling рассматривает CDR только как evidence. `CONN_ID`, `T_ECD`, `T_DBA` обрабатываются fail-closed; numeric parsing сохраняет exact integer semantics через `Decimal` и отклоняет отрицательные, fractional/non-finite/malformed значения.
 
-Verified main содержит required-header/duplicate-column guards, exact-ref correlation, evidence-only text/JSON/CLI, multi-artifact bundle, TSV report, summary/diff, standalone HTML report, r51 интерактивный локальный поиск/filter/reset, r52 export текущего visible subset в spreadsheet-safe CSV плюс print-to-PDF и r53 live summary текущего visible subset. r53 exact SHA `d9dbf9e339e96f3ec3cf591603edc86e42c16fdb` прошёл Forgejo run 638 и auto-merged в `main` как `11b3441961d366d37affa1f1d9715d91ef9daa57`.
+Verified main содержит required-header/duplicate-column guards, exact-ref correlation, evidence-only text/JSON/CLI, multi-artifact bundle, TSV report, summary/diff, standalone HTML report, r51 интерактивный локальный поиск/filter/reset, r52 export текущего visible subset в spreadsheet-safe CSV плюс print-to-PDF, r53 live summary и r54 session-only operator bookmarks с `Bookmarked only`, `Bookmark visible` и `Clear bookmarks`. r54 exact SHA `ef4ed20f33da2a051cfd5b83144b7dd71de77ec1` прошёл Forgejo и auto-merged в current main.
 
 ## 11. CDR semantics — пока НЕ доказано
 Пока нет свежего live queue CDR, не считать доказанными:
@@ -54,20 +54,19 @@ Verified main содержит required-header/duplicate-column guards, exact-re
 - запись разговора/URL без фактического evidence.
 
 ## 12. Текущий offline increment
-`ai/cdr-html-bookmarks-r54` добавляет session-only operator review поверх уже проверенного standalone visible-summary report.
-- Каждая evidence row получает явный bookmark checkbox `★` без изменения исходных evidence values.
-- `Bookmarked only` позволяет быстро оставить на экране только отмеченные строки; `Bookmark visible` одной командой отмечает текущий subset после Search/classification filter; `Clear bookmarks` очищает текущую локальную review-сессию.
-- `Bookmark visible` работает только по строкам, которые проходят базовый Search/classification filter, поэтому оператор может сначала сузить evidence, затем отметить весь найденный набор без ручного прокликивания каждой строки.
-- Закладки не сохраняются в `localStorage`, не отправляются на сервер/ECSS и исчезают при закрытии standalone HTML.
-- Existing search/classification filtering, result count, visible-summary, CSV export и print продолжают отражать фактически видимый subset; raw `T_ECD/T_DBA` остаются evidence only.
-- Новый report строится из sanitized bundle локально и не добавляет live production access.
+`ai/cdr-review-json-export-r55` добавляет полезный portable handoff поверх уже verified r54 review workflow.
+- `Export visible JSON` выгружает ровно текущий фактически видимый subset после Search/classification/Bookmarked-only фильтра.
+- Export сохраняет видимые столбцы/значения, текущую classification и session bookmark state, но исключает runtime Review checkbox column.
+- Artifact явно маркирован `ecss-cdr-evidence-review-visible-v1` и `raw-visible-values-only`; он не переименовывает `T_ECD/T_DBA` в queue wait/final Duration и не делает новых semantic claims.
+- JSON создаётся локально в браузере через `Blob`/object URL; нет `fetch`, `localStorage`, ECSS/server write или production access.
+- Existing CSV, Print/PDF, summary и bookmark workflow остаются без изменений.
 
 ## 13. Live data boundary
 Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До этого продолжается только offline tooling/tests/docs.
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
-1. Дать Forgejo проверить exact final SHA `ai/cdr-html-bookmarks-r54`; красный CI не обходить и `main` не форсировать.
-2. После GREEN улучшать review workflow только если это даёт оператору реальную пользу; не возвращаться к бесконечной серии микрогардов.
+1. Дать Forgejo проверить exact final SHA `ai/cdr-review-json-export-r55`; красный CI не обходить и `main` не форсировать.
+2. После GREEN не плодить мелкие guard-слои; следующий offline шаг должен быть заметной operator/correlation пользой или ждать real sanitized queue CDR.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости.
 5. Синхронизировать этот файл, `ROADMAP.md` и autonomous changelog после каждого завершённого инкремента.
