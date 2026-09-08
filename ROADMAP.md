@@ -23,18 +23,21 @@
 - [x] r51 local in-report search + exact classification filter + result count/reset, fully standalone/offline.
 - [x] r52 visible-subset spreadsheet-safe CSV export plus print-to-PDF; GREEN run 633 and auto-merged.
 - [x] r53 live summary of the currently visible filtered evidence subset; GREEN run 638 and auto-merged.
-- [ ] r54 session-only operator bookmarks + Bookmarked-only review filter on the standalone report; exact final tip awaits Forgejo gate.
+- [x] Base r54 session-only operator bookmarks + Bookmarked-only review filter are in current main via local auto-merge.
+- [ ] Clean follow-up `ai/cdr-html-bookmark-visible-r54`: bulk `Bookmark visible` for exactly the Search/classification subset; exact final tip awaits Forgejo gate.
 - [ ] Validate queue-call CDR mapping against a real sanitized CDR captured from a confirmed live queue call.
 - [ ] Only after evidence, define which field/row maps to external `Duration` and whether any timing field has queue-wait semantics.
 
 ## Product-facing offline goal
 - Prefer portable reports an operator/engineer can open directly (HTML/TSV/CSV/print-to-PDF) over more internal microguards while semantic live evidence is unavailable.
 - Keep JSON/bundle artifacts as machine-readable source evidence behind those views.
-- r54 bookmarks are deliberately session-only: no browser persistence and no server/ECSS write.
-- After r54 GREEN, prefer a larger useful review/export improvement only when justified rather than another internal guard layer.
+- Bookmarks are deliberately session-only: no browser persistence and no server/ECSS write.
+- `Bookmark visible` is a concrete operator workflow improvement: filter first, bulk-mark the chosen subset, then review/export/print only those rows.
+- After this clean follow-up GREEN, prefer a larger useful review/export improvement only when justified rather than another internal guard layer.
 
 ## Rules
 - No live production changes without current factual data and explicit need.
 - PROJECT_STATE is source of truth; do not redo verified licensing/VRRP/Mnesia/test2000/agents/route112 work.
 - While live CDR/phones are unavailable, prefer useful offline evidence/report tooling over endless microguards.
 - Never commit credentials, API keys, JWTs or subscriber-sensitive raw production data.
+- Do not revive the now-diverged old `ai/cdr-html-bookmarks-r54`; only clean branches from current main may proceed through the gate.
