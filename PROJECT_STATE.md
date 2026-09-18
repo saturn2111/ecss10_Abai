@@ -1,6 +1,6 @@
 # ECSS-10 ДП Абай — PROJECT_STATE
 
-Обновлено: 2026-09-08  
+Обновлено: 2026-09-18  
 Источник истины для продолжения проекта. Не возвращаться к уже подтверждённым этапам без новых фактических данных.
 
 ## 1. Архитектура
@@ -72,12 +72,14 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 2. При отсутствии нового queue CDR переключаться на другие проекты.
 3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
 4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости/одобрении.
+5. Новый отдельный инцидент 2026-09-18: AuP/Auto Provision установлен, у пользователя есть данные доступа к репозиторию, аппаратный USB-ключ/Rutoken и токен/данные от AuP, но в интерфейсе лицензия не видна. Не смешивать этот инцидент с уже подтверждённым distributed licensing SSW. Для AuP сначала определить наличие реального файла `.lic` и фактический `LICENSE_PATH` сервиса `ecss-license-master`; не подставлять выдуманный `test.lic`.
 
 ## 15. Что не делать
-- Не повторять licence/VRRP/Mnesia/test2000/agents/route112 setup.
+- Не повторять licence/VRRP/Mnesia/test2000/agents/route112 setup для SSW без нового SSW-инцидента.
 - Не использовать heuristic guesses как production mapping.
 - Не менять боевой маршрут 112 без отдельной необходимости.
 - Не считать offline unit tests доказательством поведения production ECSS.
+- Не считать Docker/repository credentials или сам USB/Rutoken заменой файла лицензии AuP без фактического подтверждения установленной схемы лицензирования.
 
 ## 16. Evidence policy
 Каждое новое утверждение о live ECSS/CDR должно опираться на фактический capture/output. Offline helpers, reports, CLI и bundles должны fail-close при ambiguous/multiple/incomplete evidence.
@@ -87,3 +89,10 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 - Не коммитить subscriber-sensitive raw production CDR; использовать sanitized fixtures.
 - Не расширять live production access только ради автономного инкремента.
 - Local gate/CI нельзя обходить force-merge в `main`.
+
+## 18. AuP licensing incident — 2026-09-18
+- Новые фактические данные пользователя имеют приоритет над старой общей отметкой о лицензировании SSW.
+- Речь идёт об AuP/Auto Provision и `ecss-license-master`, а не о `ecss-license-provider` SSW.
+- Пользователь сообщает: AuP установлен; имеются USB key/Rutoken, токен/данные от Auto Provision и данные доступа к репозиторию; лицензия в AuP не отображается.
+- Документация `ecss-license-master` требует реальный файл лицензии через `Environment=LICENSE_PATH=/absolute/path/file.lic`.
+- Следующий безопасный шаг: проверить `find` для `*.lic`, `systemctl cat/show/status ecss-license-master`, журнал сервиса и обнаружение USB-токена; после этого определить, отсутствует ли файл лицензии или неверно задан путь/доступ к ключу.
