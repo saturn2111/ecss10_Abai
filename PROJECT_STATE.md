@@ -68,11 +68,12 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 Для следующего фактического semantic mapping нужен sanitized CDR именно подтверждённого queue call вместе с известными caller/operator refs. До его появления semantic mapping считается внешне заблокированным, а production ECSS не трогается.
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
-1. Не плодить следующий микрогард: r56 и его state-sync уже verified/merged.
-2. При отсутствии нового queue CDR переключаться на другие проекты.
-3. При появлении реального sanitized queue CDR сопоставить caller/operator refs с rows и только после этого формализовать Duration/queue timing mapping.
-4. Live production changes делать только при наличии конкретных фактических данных и отдельной необходимости/одобрении.
-5. Новый отдельный инцидент 2026-09-18: AuP/Auto Provision установлен, у пользователя есть данные доступа к репозиторию, аппаратный USB-ключ/Rutoken и токен/данные от AuP, но в интерфейсе лицензия не видна. Не смешивать этот инцидент с уже подтверждённым distributed licensing SSW. Для AuP сначала определить наличие реального файла `.lic` и фактический `LICENSE_PATH` сервиса `ecss-license-master`; не подставлять выдуманный `test.lic`.
+1. По основному ECSS/CDR треку не плодить следующий микрогард: r56 и его state-sync уже verified/merged.
+2. Активный отдельный инцидент — AuP/Auto Provision licensing на `aup1`.
+3. `ecss-license-master` пока не доводить до лицензии: сначала устранить бинарную несовместимость `GLIBC_2.34 not found`, выяснив фактическую ОС/glibc и origin установленного пакета `1.0.31`.
+4. После совместимого запуска мастера отдельно решить отсутствие реального `.lic` и заменить literal `LICENSE_PATH=<license_path>/test.lic` на фактический абсолютный путь.
+5. Не обновлять/подменять системную glibc вручную ради одного пакета.
+6. Live production changes SSW/маршрута 112 делать только при отдельной необходимости.
 
 ## 15. Что не делать
 - Не повторять licence/VRRP/Mnesia/test2000/agents/route112 setup для SSW без нового SSW-инцидента.
@@ -80,6 +81,7 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 - Не менять боевой маршрут 112 без отдельной необходимости.
 - Не считать offline unit tests доказательством поведения production ECSS.
 - Не считать Docker/repository credentials или сам USB/Rutoken заменой файла лицензии AuP без фактического подтверждения установленной схемы лицензирования.
+- Не пытаться лечить `GLIBC_2.34 not found` ручной заменой `libc.so.6` или принудительным обновлением glibc из чужого дистрибутива.
 
 ## 16. Evidence policy
 Каждое новое утверждение о live ECSS/CDR должно опираться на фактический capture/output. Offline helpers, reports, CLI и bundles должны fail-close при ambiguous/multiple/incomplete evidence.
@@ -91,8 +93,13 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 - Local gate/CI нельзя обходить force-merge в `main`.
 
 ## 18. AuP licensing incident — 2026-09-18
-- Новые фактические данные пользователя имеют приоритет над старой общей отметкой о лицензировании SSW.
 - Речь идёт об AuP/Auto Provision и `ecss-license-master`, а не о `ecss-license-provider` SSW.
-- Пользователь сообщает: AuP установлен; имеются USB key/Rutoken, токен/данные от Auto Provision и данные доступа к репозиторию; лицензия в AuP не отображается.
-- Документация `ecss-license-master` требует реальный файл лицензии через `Environment=LICENSE_PATH=/absolute/path/file.lic`.
-- Следующий безопасный шаг: проверить `find` для `*.lic`, `systemctl cat/show/status ecss-license-master`, журнал сервиса и обнаружение USB-токена; после этого определить, отсутствует ли файл лицензии или неверно задан путь/доступ к ключу.
+- Фактический пакет: `ecss-license-master 1.0.31`.
+- `ecss-license-master.service` установлен и enabled, но находится в restart loop; в журнале повторяется: `erlexec: /lib/x86_64-linux-gnu/libc.so.6: version 'GLIBC_2.34' not found`.
+- Следствие: мастер падает до обработки лицензии; текущая первичная блокировка — несовместимость бинарника пакета с glibc хоста.
+- USB passthrough подтверждён: `lsusb` видит `0a89:0030 Aktiv Rutoken ECP`.
+- PC/SC socket активен; `pcscd.service` socket-activated и завершался success, поэтому отсутствие постоянно active daemon само по себе не считать проблемой.
+- В drop-in `/etc/systemd/system/ecss-license-master.service.d/override.conf` пока буквально задано `Environment=LICENSE_PATH=<license_path>/test.lic`.
+- `find / -type f -iname '*.lic'` не нашёл ни одного файла лицензии на `aup1`.
+- Это вторая независимая блокировка, которая проявится после починки запуска мастера: нужен фактический `.lic` и реальный абсолютный `LICENSE_PATH`.
+- Следующий сбор evidence: `cat /etc/os-release`, `ldd --version`/`getconf GNU_LIBC_VERSION`, Eltex AuP apt source, `apt-cache policy/madison ecss-license-master`; по результату выбрать корректный пакет/репозиторий под ОС, а не менять glibc вручную.
