@@ -111,3 +111,10 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 - Do not change SIP authentication, server addresses, dialplan, or live routing to troubleshoot a display/formatting error.
 - Next safe step: identify where the exact Cyrillic string is configured and whether it is a SIP trunk display/name field. If operationally safe and approved, test renaming only that label to ASCII (e.g. `COU`) and rerun `sip_trunk_show`; otherwise preserve current config and collect the exact command/input XML plus relevant trunk metadata for Eltex support.
 - Web search for this exact exception/command did not return a relevant official reference; avoid asserting a documented vendor bug until reproduced or confirmed by Eltex.
+
+## 20. Follow-up evidence for SIP trunk Unicode error — 2026-10-30
+- New screenshot shows the text truncated as `Центр Оперативного У...` repeated in the far-right column of the ECSS-10 subscriber list for many subscribers.
+- The column header is not visible in the screenshot, so the field is not yet identified. A prior subscriber card showed `группа доступа = all`; therefore do not assume the list's far-right column is the access group.
+- This screenshot does not prove the Cyrillic text is the SIP trunk name. Earlier hypothesis to rename a trunk label is premature.
+- Do not rename trunks, alter subscriber groups, or change SIP routing/authentication until the exact field is identified.
+- Next safe step: expose/read the far-right column header or open a subscriber's edit card and identify the corresponding field; then compare with the exact XML/request and `sip_trunk_show` failure. Treat Unicode formatting failure as a hypothesis, not a confirmed vendor bug.
