@@ -69,11 +69,10 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 
 ## 14. Текущая точка / СЛЕДУЮЩИЕ ДЕЙСТВИЯ
 1. По основному ECSS/CDR треку не плодить следующий микрогард: r56 и его state-sync уже verified/merged.
-2. Активный отдельный инцидент — AuP/Auto Provision licensing на `aup1`.
-3. `ecss-license-master` пока не доводить до лицензии: сначала устранить бинарную несовместимость `GLIBC_2.34 not found`, выяснив фактическую ОС/glibc и origin установленного пакета `1.0.31`.
-4. После совместимого запуска мастера отдельно решить отсутствие реального `.lic` и заменить literal `LICENSE_PATH=<license_path>/test.lic` на фактический абсолютный путь.
-5. Не обновлять/подменять системную glibc вручную ради одного пакета.
-6. Live production changes SSW/маршрута 112 делать только при отдельной необходимости.
+2. Активный отдельный инцидент — AuP/Auto Provision licensing на `aup1`: сначала выяснить фактическую ОС/glibc и origin пакета `ecss-license-master 1.0.31`, устранить `GLIBC_2.34 not found` совместимым пакетом/репозиторием; системную glibc вручную не менять. После запуска отдельно найти реальный `.lic` и задать абсолютный `LICENSE_PATH`.
+3. Активный отдельный live-инцидент ECSS-10 3.18.0.271 / домен `dp_abai`: HTTP-terminal `sip_trunk_show` возвращает `invalid_xml` из-за вероятной Unicode-ошибки на строке `Центр Оперативного Управления`. У SIP-транка `kt` эта строка находится в группе и сгенерированном trunk name; destination `10.97.100.1:5060`, listen `sip_main:5060`, access_group `all`, trunk active и unblocked.
+4. Для SIP-инцидента: контекст `default_routing` просмотрен, содержит `test` (2000 -> IVR), `abai_112` (112 -> IVR) и `local_calls` (local); в этих трёх правилах явных ссылок на группу нет. Следующий read-only шаг — `domain/dp_abai/routing/list`, затем проверить остальные контексты на зависимости до любой записи. Только после этого решать, безопасно ли переименовать группу в ASCII `COU` через документированную команду `trunk/sip/set`; сохранить rollback и проверить `sip_trunk_show` и входящие/исходящие вызовы.
+5. Live production changes SSW/маршрута 112 делать только при отдельной необходимости.
 
 ## 15. Что не делать
 - Не повторять licence/VRRP/Mnesia/test2000/agents/route112 setup для SSW без нового SSW-инцидента.
@@ -164,3 +163,12 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 - The user's `routing/show ctx_from_local` failed because the actual context is `default_routing`; next read-only inspection is `domain/dp_abai/routing/show default_routing`.
 - Official ECSS-10 v3.18 documentation confirms SIP trunk group can be changed via the trunk SIP set command; however, inspect current `default_routing` rules first and plan a rollback before any write. Do not change destination/listen endpoints or access group.
 - Candidate ASCII group name: `COU`. Do not execute the write until routing dependencies and rollback are understood. Proposed syntax to validate against local CoCon help/docs: `domain/dp_abai/trunk/sip/set "Центр Оперативного Управления" kt group COU`.
+
+
+## 26. Routing context review for SIP trunk Unicode incident — 2026-10-30
+- User ran read-only `domain/dp_abai/routing/show default_routing`; actual context exists and was imported 03.09.2026 16:18:08.
+- XML rules: `test` matches CDPN 2000 -> IVR script `06fbb268b12127f9`; `abai_112` matches CDPN 112 -> IVR `Abai_112_ivr`; `local_calls` matches final + CDPN % -> `local`.
+- No explicit reference to trunk group `Центр Оперативного Управления` appears in this context. This reduces concern about dependencies in `default_routing`, but does not rule out references in other routing contexts or configuration.
+- The earlier `ctx_from_local` error was caused by using a hypothetical example context; actual context for SIP trunk `kt` is `default_routing`. Do not alter any route rules to address the Unicode formatting error.
+- Official Eltex ECSS docs describe `domain/<DOMAIN>/routing/list` and support changing a SIP trunk's group through `domain/<DOMAIN>/trunk/sip/set`; a 3.14 release note explicitly lists support for changing trunk group with this command. Syntax is `set <GROUP> <TRUNK_INTERFACE> <PARAMETER> <VALUE>`. This is documentation evidence for capability, not proof that changing the group is safe for this exact production configuration.
+- Next safe step: run read-only `domain/dp_abai/routing/list`, then inspect every listed context for dependencies before changing group. Candidate ASCII target remains `COU`; do not write until all contexts are reviewed and a rollback command is prepared.
