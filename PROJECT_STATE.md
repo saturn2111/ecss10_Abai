@@ -142,3 +142,13 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 - CoCon docs do not document a single global command that searches all configuration values for Cyrillic. Inspect read-only outputs first; from a local shell, output can be piped to Unicode-aware grep if needed.
 - Do not issue any `set`, `clean`, `remove`, `alias/set`, or mass edits until the exact property (trunk group, interface name, or parameter value) is identified. The Cyrillic string in subscriber list screenshot has no visible column header and cannot yet be mapped to a property.
 - Likely safe process: list trunks; dump SIP trunk info; identify exact Cyrillic field; then set only that field to an ASCII label/value using documented `domain/<DOMAIN>/trunk/sip/set <GROUP> <TRUNK_INTERFACE> <PARAMETER> <VALUE>` if it is a settable property, with before/after verification. If the value is an interface/group identifier used in routing, do not rename blindly.
+
+## 24. Exact Cyrillic source identified in live CoCon output — 2026-10-30
+- User ran read-only commands in CoCon on ECSS-10 3.18.0.271:
+  - `domain/dp_abai/trunk/list`
+  - `domain/dp_abai/trunk/sip/info * *`
+- Confirmed exactly one trunk in `dp_abai`: trunk/interface `kt`, owner `sip1`, group `Центр Оперативного Управления`, active=true, type=sip, destination `10.97.100.1:5060`, listen `"sip_main"/"192.168.191.4":5060`, need-registration=false, blocked=false, accessible=true.
+- The Cyrillic is in the SIP trunk interface-group field, not a subscriber-card field. It is the leading candidate for the earlier `sip_trunk_show invalid_xml` error; causal link is plausible but not yet verified by rerunning command after correction.
+- Official Eltex ECSS-10 docs describe SIP parameter `group` as the group to which the SIP interface belongs and support `trunk/sip/set <GROUP> <TRUNK_INTERFACE> <PARAMETER> <VALUE>`. However, moving the trunk to an ASCII-named group can affect group references/operations; do not execute write yet until read-only `domain/dp_abai/trunk/sip/info "Центр Оперативного Управления" kt` identifies routing.context and that context is inspected with `domain/dp_abai/routing/show <CONTEXT>`.
+- Potential planned target group: `COU` (ASCII). Proposed write only after dependency review: `domain/dp_abai/trunk/sip/set "Центр Оперативного Управления" kt group COU`; verify syntax in local CoCon help/version and do not use `remove`/redeclare as a first step.
+- Do not alter destination IP/port, listen interface, auth, or route behavior. After an approved group change, verify `trunk/list`, `trunk/sip/info * *`, `sip_trunk_show`, and test inbound/outbound call behavior.
