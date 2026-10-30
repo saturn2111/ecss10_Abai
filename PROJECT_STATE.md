@@ -124,3 +124,10 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 - Therefore do not instruct the user to edit this value from the card's `Основные` tab.
 - The visible list column and its header/meaning remain unidentified; do not assume it is `группа доступа` (the card showed `all`) or the SIP trunk name.
 - Next safe UI inspection: select one subscriber and open the top-level `Параметры` dropdown in the subscriber list, inspect available operations; alternatively reveal the table column header. Do not commit any changes until the field/operation is identified.
+
+## 22. Access-group bulk edit via UI not available — 2026-10-30
+- User confirms the subscriber list's `Параметры` dropdown does not expose the needed bulk group-access edit action, and the displayed `Центр Оперативного Управления` text is not a field in the subscriber card.
+- Official ECSS-10 documentation describes alias access group as property `access_group`, available in CoCon CLI via `domain/<DOMAIN>/alias/set`; it also documents `domain/<DOMAIN>/alias/info <address>` for inspection and `domain/<DOMAIN>/access-group/ls-groups` to list groups.
+- For this installation, domain visible in UI is `dp_abai`, but do not assume the truncated Cyrillic table column is the `access_group` value.
+- Next safe step is read-only inspection in CoCon console: `domain/dp_abai/access-group/ls-groups` and `domain/dp_abai/alias/info 1001`. Review output and verify the intended target group before issuing any `alias/set` write.
+- Do not use broad wildcard writes or change trunk/route settings. If the exact per-alias CLI argument scope is uncertain, inspect one alias first and apply only to a confirmed address range.
