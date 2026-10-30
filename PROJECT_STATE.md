@@ -118,3 +118,9 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 - This screenshot does not prove the Cyrillic text is the SIP trunk name. Earlier hypothesis to rename a trunk label is premature.
 - Do not rename trunks, alter subscriber groups, or change SIP routing/authentication until the exact field is identified.
 - Next safe step: expose/read the far-right column header or open a subscriber's edit card and identify the corresponding field; then compare with the exact XML/request and `sip_trunk_show` failure. Treat Unicode formatting failure as a hypothesis, not a confirmed vendor bug.
+
+## 21. User confirmed text is not present inside subscriber card — 2026-10-30
+- User reports the value `Центр Оперативного Управления` is not shown as a field inside the subscriber card.
+- Therefore do not instruct the user to edit this value from the card's `Основные` tab.
+- The visible list column and its header/meaning remain unidentified; do not assume it is `группа доступа` (the card showed `all`) or the SIP trunk name.
+- Next safe UI inspection: select one subscriber and open the top-level `Параметры` dropdown in the subscriber list, inspect available operations; alternatively reveal the table column header. Do not commit any changes until the field/operation is identified.
