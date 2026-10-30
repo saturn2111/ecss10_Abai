@@ -131,3 +131,14 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 - For this installation, domain visible in UI is `dp_abai`, but do not assume the truncated Cyrillic table column is the `access_group` value.
 - Next safe step is read-only inspection in CoCon console: `domain/dp_abai/access-group/ls-groups` and `domain/dp_abai/alias/info 1001`. Review output and verify the intended target group before issuing any `alias/set` write.
 - Do not use broad wildcard writes or change trunk/route settings. If the exact per-alias CLI argument scope is uncertain, inspect one alias first and apply only to a confirmed address range.
+
+## 23. CoCon search for Cyrillic affecting sip_trunk_show — 2026-10-30
+- User asks for CoCon commands to locate and remove Cyrillic causing HTTP-terminal `sip_trunk_show` error.
+- Official Eltex CLI docs (ECSS-10 3.14.x reference; current deployment is 3.18, so verify syntax in local help) confirm read-only commands:
+  - `domain/dp_abai/trunk/list` lists trunk names, owner, group, type.
+  - `domain/dp_abai/trunk/sip/info * *` shows all SIP trunk interface parameters across groups.
+  - `domain/dp_abai/iface/list * *` can inspect interface inventory; `domain/dp_abai/iface/info * <GROUP> <NAME>` may be used for a specific interface if needed.
+  - `domain/dp_abai/alias/extended-info 1001 1001@dp_abai` can inspect subscriber alias/interface metadata; `domain/dp_abai/alias/info <range>` can inspect properties.
+- CoCon docs do not document a single global command that searches all configuration values for Cyrillic. Inspect read-only outputs first; from a local shell, output can be piped to Unicode-aware grep if needed.
+- Do not issue any `set`, `clean`, `remove`, `alias/set`, or mass edits until the exact property (trunk group, interface name, or parameter value) is identified. The Cyrillic string in subscriber list screenshot has no visible column header and cannot yet be mapped to a property.
+- Likely safe process: list trunks; dump SIP trunk info; identify exact Cyrillic field; then set only that field to an ASCII label/value using documented `domain/<DOMAIN>/trunk/sip/set <GROUP> <TRUNK_INTERFACE> <PARAMETER> <VALUE>` if it is a settable property, with before/after verification. If the value is an interface/group identifier used in routing, do not rename blindly.
