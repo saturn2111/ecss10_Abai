@@ -152,3 +152,15 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 - Official Eltex ECSS-10 docs describe SIP parameter `group` as the group to which the SIP interface belongs and support `trunk/sip/set <GROUP> <TRUNK_INTERFACE> <PARAMETER> <VALUE>`. However, moving the trunk to an ASCII-named group can affect group references/operations; do not execute write yet until read-only `domain/dp_abai/trunk/sip/info "Центр Оперативного Управления" kt` identifies routing.context and that context is inspected with `domain/dp_abai/routing/show <CONTEXT>`.
 - Potential planned target group: `COU` (ASCII). Proposed write only after dependency review: `domain/dp_abai/trunk/sip/set "Центр Оперативного Управления" kt group COU`; verify syntax in local CoCon help/version and do not use `remove`/redeclare as a first step.
 - Do not alter destination IP/port, listen interface, auth, or route behavior. After an approved group change, verify `trunk/list`, `trunk/sip/info * *`, `sip_trunk_show`, and test inbound/outbound call behavior.
+
+## 25. Full CoCon output confirms Cyrillic in generated trunk identifier — 2026-10-30
+- User ran `domain/dp_abai/trunk/sip/info * kt` on ECSS-10 3.18.0.271.
+- Exact result:
+  - `routing.context = default_routing` (not `ctx_from_local`; the earlier ctx_from_local command was only an illustrative placeholder and correctly returned Bad context).
+  - `Group` is rendered as Erlang integer list `[1062,1077,1085,1090,1088,32,1054,1077,1088,1072,1090,1080,1074,1085,1086,1075,1086,32,1059,1087,1088,1072,1074,1083,1077,1085,1080,1103]` = `Центр Оперативного Управления`.
+  - read-only parameter `trunk (trunk name)` contains `dp_abai.Центр Оперативного Управления.trunk.autoname`, likewise rendered as a codepoint list.
+  - Other critical parameters: remote-end-point 10.97.100.1:5060; local-end-point sip_main:5060; mode sip-proxy; access_group all; interface active=true and not blocked; disconnections number 0.
+- This strongly implicates Cyrillic in the group and generated trunk name as the trigger for `sip_trunk_show`'s `ion_common:format(["~s", [codepoints]])` badarg. Root cause is highly likely but should be verified after any approved fix.
+- The user's `routing/show ctx_from_local` failed because the actual context is `default_routing`; next read-only inspection is `domain/dp_abai/routing/show default_routing`.
+- Official ECSS-10 v3.18 documentation confirms SIP trunk group can be changed via the trunk SIP set command; however, inspect current `default_routing` rules first and plan a rollback before any write. Do not change destination/listen endpoints or access group.
+- Candidate ASCII group name: `COU`. Do not execute the write until routing dependencies and rollback are understood. Proposed syntax to validate against local CoCon help/docs: `domain/dp_abai/trunk/sip/set "Центр Оперативного Управления" kt group COU`.
