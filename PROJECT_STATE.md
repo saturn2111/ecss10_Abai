@@ -103,3 +103,11 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 - `find / -type f -iname '*.lic'` не нашёл ни одного файла лицензии на `aup1`.
 - Это вторая независимая блокировка, которая проявится после починки запуска мастера: нужен фактический `.lic` и реальный абсолютный `LICENSE_PATH`.
 - Следующий сбор evidence: `cat /etc/os-release`, `ldd --version`/`getconf GNU_LIBC_VERSION`, Eltex AuP apt source, `apt-cache policy/madison ecss-license-master`; по результату выбрать корректный пакет/репозиторий под ОС, а не менять glibc вручную.
+
+## 19. ECSS SIP trunk show Unicode-format error — 2026-10-30
+- User supplied output from `[/commands/sip_trunk_show]`: `<error cmd="sip_trunk_show" reason="invalid_xml" ... entity="dp_abai"/>`.
+- Inner error: `{badarg,{ion_common,format,["~s",[[1062,1077,1085,1090,1088,32,1054,1087,1077,1088,1072,1090,1080,1074,1085,1086,1075,1086,32,1059,1087,1088,1072,1074,1083,1077,1085,1080,1103]]]}}`; code points decode to `Центр Оперативного Управления`.
+- Strong indication of a Unicode/character-list formatting failure in the `sip_trunk_show` path, likely triggered by a Cyrillic name/label; this is an inference from the exception, not yet confirmed root cause.
+- Do not change SIP authentication, server addresses, dialplan, or live routing to troubleshoot a display/formatting error.
+- Next safe step: identify where the exact Cyrillic string is configured and whether it is a SIP trunk display/name field. If operationally safe and approved, test renaming only that label to ASCII (e.g. `COU`) and rerun `sip_trunk_show`; otherwise preserve current config and collect the exact command/input XML plus relevant trunk metadata for Eltex support.
+- Web search for this exact exception/command did not return a relevant official reference; avoid asserting a documented vendor bug until reproduced or confirmed by Eltex.
