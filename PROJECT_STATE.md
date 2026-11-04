@@ -332,3 +332,10 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 - В журнале `pcscd` около 14:40:02 повторяются `winscard.c:264:SCardConnect() Reader Not Found`. Это указывает, что PC/SC-клиент запрашивал имя считывателя, которое daemon не смог найти; пока не установлено, какой именно client/reader name и почему отсутствует.
 - В совокупности с `lsusb` (Rutoken ECP `0a89:0030` виден в гостевой ОС) USB enumeration подтверждён, PC/SC socket доступен, но наличие корректно зарегистрированного PC/SC reader/token и доступность его из LPM ещё не подтверждены.
 - Следующий безопасный шаг — read-only перечислить PC/SC readers через `opensc-tool -l` в Ubuntu VM `ecss1`. Если команда отсутствует, сообщить точную ошибку; ничего не устанавливать и не перезапускать до анализа. Не считать `pcscd.service inactive` ошибкой и не выполнять restart.
+
+## 45. PC/SC обнаруживает Aktiv Rutoken ECP — 2026-11-04
+- User выполнил в Ubuntu VM `ecss1`: `opensc-tool -l`.
+- Фактический вывод: `# Detected readers (pcsc)`; reader `0`, `Card: Yes`, `Name: Aktiv Rutoken ECP 00 00`.
+- Это подтверждает, что через PC/SC зарегистрирован reader Aktiv Rutoken ECP и в нём обнаружена карта/токен. Следовательно, текущая проблема не сводится к отсутствию USB enumeration или отсутствию PC/SC reader.
+- Ранее зафиксированные `SCardConnect() Reader Not Found` не считать доказательством неисправности reader: `opensc-tool -l` сейчас успешно его перечисляет. Неизвестно, какой процесс и с каким именем reader выдавал эти сообщения.
+- Ещё не подтверждены успешное чтение токена/его идентификатора и доступность токена конкретно для LPM. Следующий безопасный шаг — read-only `opensc-tool -i` на `ecss1`, чтобы получить card/token information; прислать полный вывод. Не использовать PIN, не выполнять sign/auth/write, не перезапускать PC/SC/LPM и не менять лицензию.
