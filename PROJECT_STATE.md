@@ -324,3 +324,11 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 - Другие USB-устройства в выводе — QEMU USB Tablet и системные root hub; к licensing alarm отношения не устанавливаем.
 - Никаких изменений, переподключений или перезапусков не выполнялось.
 - Следующий безопасный шаг: read-only проверить состояние PC/SC socket/service в Ubuntu VM `ecss1` командой `systemctl status pcscd.socket pcscd.service --no-pager`. По выводу решить, нужен ли следующий read-only тест PC/SC; не считать `pcscd.service` обязанным постоянно быть active, если используется socket activation. Не перезапускать службы и не менять конфигурацию до анализа.
+
+## 44. PC/SC socket активен; Reader Not Found — 2026-11-04
+- User выполнил в Linux shell Ubuntu VM `ecss1`: `systemctl status pcscd.socket pcscd.service --no-pager`.
+- `pcscd.socket`: `enabled`, `Active: active (listening)`, socket `/run/pcscd/pcscd.comm`; запущен с 11:09:50.
+- `pcscd.service`: `inactive (dead)` с 14:41:03, но `ExecStart=/usr/sbin/pcscd --foreground --auto-exit`, exit status `0/SUCCESS`, `Deactivated successfully`; при включённой socket activation и `--auto-exit` это само по себе штатное завершение, не основание для restart.
+- В журнале `pcscd` около 14:40:02 повторяются `winscard.c:264:SCardConnect() Reader Not Found`. Это указывает, что PC/SC-клиент запрашивал имя считывателя, которое daemon не смог найти; пока не установлено, какой именно client/reader name и почему отсутствует.
+- В совокупности с `lsusb` (Rutoken ECP `0a89:0030` виден в гостевой ОС) USB enumeration подтверждён, PC/SC socket доступен, но наличие корректно зарегистрированного PC/SC reader/token и доступность его из LPM ещё не подтверждены.
+- Следующий безопасный шаг — read-only перечислить PC/SC readers через `opensc-tool -l` в Ubuntu VM `ecss1`. Если команда отсутствует, сообщить точную ошибку; ничего не устанавливать и не перезапускать до анализа. Не считать `pcscd.service inactive` ошибкой и не выполнять restart.
