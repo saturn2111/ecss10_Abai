@@ -1,6 +1,6 @@
 # ECSS-10 ДП Абай — PROJECT_STATE
 
-Обновлено: 2026-09-18  
+Обновлено: 2026-11-04  
 Источник истины для продолжения проекта. Не возвращаться к уже подтверждённым этапам без новых фактических данных.
 
 ## 1. Архитектура
@@ -75,6 +75,7 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 5. Попытка `domain/dp_abai/trunk/sip/set "Центр Оперативного Управления" kt group COU` 30.10.2026 вернула `Error: Wrong identifier`; live re-check подтвердил, что группа не изменилась. Активных вызовов было 0 на момент проверки 11:36. Не повторять эту команду. Официальная документация подтверждает wildcard `*` в аргументе GROUP для SIP trunk set/info и возможность смены группы через set, но не раскрывает допустимый формат identifier или конкретный пример изменения группы.
 6. Локальная справка получена через `man domain/dp_abai/trunk/sip/set` и подтверждена также ключом `-h`: `set GROUP TRUNK_INTERFACE PARAMETER [VALUE]`; `group` переносит транк в существующую или новую группу; GROUP в начале команды — существующая группа или `--profile`. Вызов без параметров возвращает `Wrong identifier`, но `man` работает. Официальная документация ECSS-10 3.18 отдельно подтверждает `*` как допустимый GROUP для `trunk/sip/set`; так как в `dp_abai` только один транк `kt`, wildcard по группе вместе с явным `kt` адресует именно этот транк. Предыдущий `COU` write отклонён, точный аргумент-причина не установлена; вероятные причины — Cyrillic/пробелы в source GROUP и/или uppercase target. Локальная справка говорит, что target group может быть новой; `cou.gr` соответствует стилю примеров Eltex (`sbc.gr`, `loc.gr`, `test.group`), но конкретный target identifier пока не проверен на этой системе. Следующий шаг до записи: read-only проверить текущие вызовы `domain/dp_abai/trunk/sip/call-list * kt` и свойства текущей группы `domain/dp_abai/iface/group-info -g \"Центр Оперативного Управления\" -o sip1`; затем оценить, можно ли переносить группу без потери групповых свойств. Не считать `--check` dry-run: локальная справка показывает его только в примере изменения remote-end-point, а семантика предварительной проверки group move не подтверждена. Не выполнять write до новой проверки активных вызовов и подтверждения окна работ. Сохранять неизменными endpoints, auth, access_group, routing.context и маршруты. После согласованного изменения проверить `trunk/list`, `trunk/sip/info * kt`, HTTP-terminal `sip_trunk_show`, затем входящие/исходящие звонки.
 7. Live production changes SSW/маршрута 112 делать только при отдельной необходимости.
+8. Новый live-инцидент `LPM Token missing` на `ds1@ecss1` (04.11.2026): активный режим `default`, SSW ID `ECSS0000400`, licence id `1`; паспорт присутствует, ID совпадает, срок до `31.12.2999`. `lsusb` внутри Ubuntu VM `ecss1` уже подтвердил `0a89:0030 Aktiv Rutoken ECP`, то есть USB-устройство перечисляется внутри VM. Следующий безопасный шаг — read-only `systemctl status pcscd.socket pcscd.service --no-pager` на VM `ecss1`; пока не перезапускать PC/SC/LPM, не трогать USB passthrough и не менять лицензию.
 
 ## 15. Что не делать
 - Не повторять licence/VRRP/Mnesia/test2000/agents/route112 setup для SSW без нового SSW-инцидента.
@@ -237,7 +238,6 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 - User выполнил `domain/dp_abai/iface/group-info -g "Центр Оперативного Управления" -o sip1`. Команда была распределённо исполнена на `ds1@ecss1` и вернула ошибку форматирования вывода с внутренним результатом `{ok,[]}`.
 - В аргументе GROUP отображены codepoints `34` в начале и конце — это символы двойных кавычек. Значит, в этом вызове кавычки попали в значение фильтра как буквальные символы; пустой результат не доказывает отсутствие свойств у реальной группы `Центр Оперативного Управления`.
 - Не повторять фильтр с двойными кавычками и не делать выводов о свойствах группы по `{ok,[]}`. Следующий безопасный запрос — получить все группы владельца `sip1` без фильтра GROUP: `domain/dp_abai/iface/group-info -o sip1`. Это read-only. Никаких `set`/переносов группы пока не выполнять.
-
 ## 34. Нефильтрованный iface/group-info по sip1 — 2026-10-30
 - User выполнил read-only `domain/dp_abai/iface/group-info -o sip1` в 11:45:55; команда отработала на `ds1@ecss1` и вернула заголовок `Domain dp_abai owner sip1 group * iface resources properties`, но таблица `W / Property / Value` осталась пустой.
 - Это означает, что данный запрос не показал дополнительных iface resource properties для всех групп владельца `sip1`. Не трактовать пустую таблицу как доказательство отсутствия любых зависимостей/ссылок на группу в конфигурации ECSS: команда показывает именно iface resource properties.
@@ -316,3 +316,11 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 - Официальная документация ECSS-10 описывает паспорт как связь SSW_ID с USB-ключом; при отключении токена паспорт/лицензия не удаляются, а alarm может сообщать о потере LPM token. Release Notes 3.17 содержат пример `ecss::licence` / `outOfService` / Licence management service not available на `ds1@ecss1` и `ds1@ecss2` при проблеме с токеном. Sources: https://docs.eltex-co.ru/e318/cluster-storage-ds1-licence-komandy-upravleniya-litsenziyami-701043484.html ; https://api.prod.eltex-co.ru/storage/upload_center/files/41/ECSS-10_3.17_Release%20Notes.pdf
 - Текущая рабочая гипотеза: паспорт в ECSS установлен и соответствует SSW ID; остаётся проверить физическую доступность USB token на VM/узле `ecss1`, а не переустанавливать паспорт.
 - Следующий безопасный шаг: выйти из CoCon в Linux shell VM `ecss1` (не на Proxmox host) и выполнить read-only `lsusb`; прислать полный вывод. Искомое ранее известное устройство: USB Rutoken ECP, VID:PID `0a89:0030`. Пока не переподключать USB, не менять passthrough, не выполнять `set-passport` и не переключать licence.
+
+## 43. Rutoken виден внутри VM ecss1 — 2026-11-04
+- После выхода из CoCon пользователь выполнил `lsusb` непосредственно в Linux shell Ubuntu VM `ecss1` (`root@ecss1`).
+- Фактическая строка: `Bus 009 Device 002: ID 0a89:0030 Aktiv Rutoken ECP`.
+- Следовательно, Rutoken ECP физически перечисляется на USB-шине внутри VM `ecss1`; USB passthrough до гостевой ОС работает на уровне USB enumeration. Это не доказывает, что PC/SC и LPM могут открыть токен и прочитать его данные.
+- Другие USB-устройства в выводе — QEMU USB Tablet и системные root hub; к licensing alarm отношения не устанавливаем.
+- Никаких изменений, переподключений или перезапусков не выполнялось.
+- Следующий безопасный шаг: read-only проверить состояние PC/SC socket/service в Ubuntu VM `ecss1` командой `systemctl status pcscd.socket pcscd.service --no-pager`. По выводу решить, нужен ли следующий read-only тест PC/SC; не считать `pcscd.service` обязанным постоянно быть active, если используется socket activation. Не перезапускать службы и не менять конфигурацию до анализа.
