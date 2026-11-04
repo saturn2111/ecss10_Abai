@@ -339,3 +339,10 @@ r55 exact SHA `7e179cf42a5830a0fa3e9a9c05547e9eecadc7b7` прошёл Forgejo ru
 - Это подтверждает, что через PC/SC зарегистрирован reader Aktiv Rutoken ECP и в нём обнаружена карта/токен. Следовательно, текущая проблема не сводится к отсутствию USB enumeration или отсутствию PC/SC reader.
 - Ранее зафиксированные `SCardConnect() Reader Not Found` не считать доказательством неисправности reader: `opensc-tool -l` сейчас успешно его перечисляет. Неизвестно, какой процесс и с каким именем reader выдавал эти сообщения.
 - Ещё не подтверждены успешное чтение токена/его идентификатора и доступность токена конкретно для LPM. Следующий безопасный шаг — read-only `opensc-tool -i` на `ecss1`, чтобы получить card/token information; прислать полный вывод. Не использовать PIN, не выполнять sign/auth/write, не перезапускать PC/SC/LPM и не менять лицензию.
+
+## 46. Уточнение результата opensc-tool -i — 2026-11-04
+- User выполнил в Ubuntu VM `ecss1`: `opensc-tool -i`.
+- Фактический вывод: `OpenSC 0.22.0 [gcc 11.4.0]`; features `locking zlib readline openssl pcsc(libpcsclite.so.1)`.
+- Это только сведения о сборке OpenSC, не информация о карте/токене. Предыдущая рекомендация трактовала ключ `-i` неверно; не считать, что card/token info уже получена.
+- Сохраняется подтверждённое из раздела 45: `opensc-tool -l` видит reader `Aktiv Rutoken ECP 00 00`, `Card: Yes`.
+- Следующий безопасный шаг: в Ubuntu VM `ecss1` выполнить `opensc-tool -a` для чтения ATR. Только read-only; не вводить PIN, не использовать reset/write/auth/sign и не перезапускать PC/SC/LPM.
